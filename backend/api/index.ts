@@ -1,3 +1,4 @@
+import { handle } from "@hono/node-server/vercel";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -42,8 +43,4 @@ app.route("/vibe", vibe);
 
 app.get("/", (c) => c.json({ status: "ok", name: "Crosswalk API" }));
 
-export default {
-  async fetch(request: Request) {
-    return app.fetch(request);
-  },
-};
+export default handle(app);

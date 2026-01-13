@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import type { Context, Next } from "hono";
 import * as jose from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-in-production";

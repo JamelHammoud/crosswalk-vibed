@@ -189,7 +189,7 @@ export async function createPullRequest(
     state: "open",
   });
 
-  if (existingPRs.length > 0) {
+  if (existingPRs.length > 0 && existingPRs[0]) {
     return {
       number: existingPRs[0].number,
       url: existingPRs[0].html_url,

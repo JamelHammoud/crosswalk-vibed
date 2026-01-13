@@ -83,7 +83,7 @@ export function ActivityView() {
     }
   };
 
-  const filteredNotifications = notifications.filter((n) => {
+  const filteredNotifications = notifications.filter((_n) => {
     if (filter === "all") return true;
     return true;
   });
@@ -96,9 +96,7 @@ export function ActivityView() {
           <button
             onClick={() => setFilter("all")}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-bold text-sm transition-all ${
-              filter === "all"
-                ? "bg-ink text-white"
-                : "bg-[#F5F1F0] text-ink"
+              filter === "all" ? "bg-ink text-white" : "bg-[#F5F1F0] text-ink"
             }`}
           >
             All
@@ -111,11 +109,7 @@ export function ActivityView() {
                 : "bg-[#F5F1F0] text-ink"
             }`}
           >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
             </svg>
             Around
@@ -128,11 +122,7 @@ export function ActivityView() {
                 : "bg-[#F5F1F0] text-ink"
             }`}
           >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 22 22"
-              fill="currentColor"
-            >
+            <svg className="w-4 h-4" viewBox="0 0 22 22" fill="currentColor">
               <path d="M16.8337 4.24939C18.3484 5.76385 19.2146 7.808 19.2493 9.94961C19.2841 12.0912 18.4845 14.1624 17.0198 15.7251L16.8337 15.9176L12.9443 19.8061C12.4508 20.2993 11.7883 20.5865 11.0909 20.6095C10.3936 20.6325 9.71362 20.3895 9.18872 19.9299L9.05672 19.8061L5.16638 15.9167C3.6192 14.3695 2.75 12.2711 2.75 10.0831C2.75 7.89501 3.6192 5.79658 5.16638 4.24939C6.71357 2.70221 8.812 1.83301 11.0001 1.83301C13.1881 1.83301 15.2865 2.70221 16.8337 4.24939ZM11.0001 7.33306C10.6389 7.33306 10.2813 7.40419 9.94767 7.54239C9.61403 7.68059 9.31087 7.88315 9.05551 8.13851C8.80015 8.39388 8.59758 8.69703 8.45938 9.03068C8.32118 9.36432 8.25005 9.72192 8.25005 10.0831C8.25005 10.4442 8.32118 10.8018 8.45938 11.1354C8.59758 11.4691 8.80015 11.7722 9.05551 12.0276C9.31087 12.283 9.61403 12.4855 9.94767 12.6237C10.2813 12.7619 10.6389 12.8331 11.0001 12.8331C11.7294 12.8331 12.4289 12.5433 12.9446 12.0276C13.4603 11.5119 13.7501 10.8124 13.7501 10.0831C13.7501 9.35371 13.4603 8.65424 12.9446 8.13851C12.4289 7.62279 11.7294 7.33306 11.0001 7.33306Z" />
             </svg>
             Comments

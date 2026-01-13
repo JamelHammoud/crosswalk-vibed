@@ -1,12 +1,12 @@
 {
   "name": "crosswalk-backend",
-  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
+    "build:vercel": "npx esbuild api/index.ts --bundle --platform=node --format=esm --outfile=api/index.js --external:@libsql/client",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",

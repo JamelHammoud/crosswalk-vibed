@@ -4,7 +4,11 @@ import { db } from "../db";
 import { notifications, users, drops } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 
-const app = new Hono();
+type Variables = {
+  userId: string;
+};
+
+const app = new Hono<{ Variables: Variables }>();
 
 app.use("/*", authMiddleware);
 

@@ -29,7 +29,11 @@ const VALID_EFFECTS: EffectType[] = [
 ];
 const DELETE_WINDOW_MS = 15 * 60 * 1000;
 
-const drops = new Hono();
+type Variables = {
+  userId: string;
+};
+
+const drops = new Hono<{ Variables: Variables }>();
 
 const notExpiredFilter = sql`(${schema.drops.expiresAt} IS NULL OR ${schema.drops.expiresAt} > datetime('now'))`;
 

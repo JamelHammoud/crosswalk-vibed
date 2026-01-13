@@ -14,13 +14,25 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://player.scrns.io",
-      "https://server.scrns.io",
-      "capacitor://localhost",
-      "ionic://localhost",
-    ],
+    origin: (origin) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "https://player.scrns.io",
+        "https://server.scrns.io",
+        "https://crosswalk-vibed-frontend.vercel.app",
+        "capacitor://localhost",
+        "ionic://localhost",
+      ];
+      if (!origin) return allowedOrigins[0];
+      if (allowedOrigins.includes(origin)) return origin;
+      if (
+        origin.includes("crosswalk-vibed-frontend") &&
+        origin.includes("vercel.app")
+      ) {
+        return origin;
+      }
+      return allowedOrigins[0];
+    },
     credentials: true,
   })
 );

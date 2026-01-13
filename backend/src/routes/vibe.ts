@@ -175,7 +175,7 @@ async function handleToolCall(
       const commitMessage = toolInput.commit_message as string;
 
       const previewUrl =
-        process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed";
+        process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed-frontend";
       const branchSlug = branchName.replace(/\//g, "-");
 
       const result = await github.commitFiles(
@@ -446,7 +446,7 @@ vibe.get("/preview-url", async (c) => {
   }
 
   const previewUrlBase =
-    process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed";
+    process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed-frontend";
   const branchSlug = branch.branchName.replace(/\//g, "-");
   const previewUrl = `${previewUrlBase}-git-${branchSlug}.vercel.app`;
 

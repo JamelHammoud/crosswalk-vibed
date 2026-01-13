@@ -3,8 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --watch src/index.ts",
-    "start": "bun run src/index.ts",
+    "dev": "bun run --watch src/server.ts",
+    "start": "bun run src/server.ts",
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "build:vercel": "npx esbuild api/index.ts --bundle --platform=node --format=esm --outfile=api/index.js --external:@libsql/client",
     "typecheck": "tsc --noEmit",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAppStore } from "../stores/app";
 import { api } from "../services/api";
 import { THEME_COLORS } from "../constants/theme";
+import { VibeChat } from "./VibeChat";
 
 interface ProfileDrawerProps {
   isOpen: boolean;
@@ -19,8 +20,9 @@ export function ProfileDrawer({
   const [username, setUsername] = useState(user?.name || "");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isVibeChatOpen, setIsVibeChatOpen] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isVibeChatOpen) return null;
 
   const handleSave = async () => {
     if (!username.trim()) return;
@@ -155,6 +157,24 @@ export function ProfileDrawer({
             </div>
 
             <button
+              onClick={() => setIsVibeChatOpen(true)}
+              className="w-full h-14 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white font-bold rounded-xl flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <svg
+                className="w-6 h-6"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />
+                <path d="M19 11h2m-1 -1v2" />
+              </svg>
+              Open Vibe²
+            </button>
+
+            <button
               onClick={handleSignOut}
               className="w-full h-12 bg-red-50 text-red-600 font-medium rounded-xl mt-4"
             >
@@ -163,6 +183,11 @@ export function ProfileDrawer({
           </div>
         </div>
       </div>
+
+      <VibeChat
+        isOpen={isVibeChatOpen}
+        onClose={() => setIsVibeChatOpen(false)}
+      />
     </>
   );
 }

@@ -45,6 +45,28 @@ export const notifications = sqliteTable("notifications", {
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
 });
 
+export const vibeBranches = sqliteTable("vibe_branches", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id),
+  branchName: text("branch_name").notNull(),
+  hasChanges: integer("has_changes").notNull().default(0),
+  lastSyncAt: text("last_sync_at"),
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+});
+
+export const vibeMessages = sqliteTable("vibe_messages", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  role: text("role").notNull(), // 'user' or 'assistant'
+  content: text("content").notNull(),
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Drop = typeof drops.$inferSelect;
@@ -53,3 +75,7 @@ export type Highfive = typeof highfives.$inferSelect;
 export type NewHighfive = typeof highfives.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type VibeBranch = typeof vibeBranches.$inferSelect;
+export type NewVibeBranch = typeof vibeBranches.$inferInsert;
+export type VibeMessage = typeof vibeMessages.$inferSelect;
+export type NewVibeMessage = typeof vibeMessages.$inferInsert;

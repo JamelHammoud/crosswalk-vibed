@@ -125,4 +125,60 @@ export const api = {
         method: "POST",
       }),
   },
+
+  vibe: {
+    getBranchStatus: () =>
+      request<{
+        branch: string | null;
+        hasChanges: boolean;
+        changedFiles: string[];
+        aheadBy: number;
+        behindBy: number;
+        lastSync: string | null;
+      }>("/vibe/branch"),
+
+    chat: (message: string) =>
+      request<{
+        message: string;
+        toolsUsed?: string[];
+        branchStatus?: {
+          branch: string | null;
+          hasChanges: boolean;
+          changedFiles: string[];
+          aheadBy: number;
+        };
+      }>("/vibe/chat", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      }),
+
+    openPR: (title?: string, body?: string) =>
+      request<{ prNumber: number; prUrl: string }>("/vibe/pr", {
+        method: "POST",
+        body: JSON.stringify({ title, body }),
+      }),
+
+    revert: () =>
+      request<{ success: boolean; message: string }>("/vibe/revert", {
+        method: "POST",
+      }),
+
+    getPreviewUrl: () =>
+      request<{ previewUrl: string; branch: string }>("/vibe/preview-url"),
+
+    clearHistory: () =>
+      request<{ success: boolean }>("/vibe/history", {
+        method: "DELETE",
+      }),
+
+    getFile: (path: string) =>
+      request<{ content: string; sha: string }>(
+        `/vibe/file?path=${encodeURIComponent(path)}`
+      ),
+
+    listFiles: (path: string = "") =>
+      request<{
+        files: { name: string; path: string; type: "file" | "dir" }[];
+      }>(`/vibe/files?path=${encodeURIComponent(path)}`),
+  },
 };

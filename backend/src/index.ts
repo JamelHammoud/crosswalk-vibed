@@ -5,6 +5,7 @@ import type { ServerWebSocket } from "bun";
 import auth from "./routes/auth";
 import drops from "./routes/drops";
 import notifications from "./routes/notifications";
+import vibe from "./routes/vibe";
 import { addClient, removeClient } from "./ws";
 
 const app = new Hono();
@@ -27,6 +28,7 @@ app.use(
 app.route("/auth", auth);
 app.route("/drops", drops);
 app.route("/notifications", notifications);
+app.route("/vibe", vibe);
 
 app.get("/", (c) => c.json({ status: "ok", name: "Crosswalk API" }));
 

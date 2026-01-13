@@ -10,6 +10,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    allowedHosts: ["player.scrns.io", "crosswalk-vibed-frontend.vercel.app"],
+    allowedHosts: ["player.scrns.io", "crswlk.vercel.app"],
   },
 });

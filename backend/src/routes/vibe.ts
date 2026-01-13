@@ -174,8 +174,7 @@ async function handleToolCall(
       const content = toolInput.content as string;
       const commitMessage = toolInput.commit_message as string;
 
-      const previewUrl =
-        process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed-frontend";
+      const previewUrl = process.env.PREVIEW_URL_BASE || "https://crswlk";
       const branchSlug = branchName.replace(/\//g, "-");
 
       const result = await github.commitFiles(
@@ -445,8 +444,7 @@ vibe.get("/preview-url", async (c) => {
     return c.json({ error: "No branch found" }, 404);
   }
 
-  const previewUrlBase =
-    process.env.PREVIEW_URL_BASE || "https://crosswalk-vibed-frontend";
+  const previewUrlBase = process.env.PREVIEW_URL_BASE || "https://crswlk";
   const branchSlug = branch.branchName.replace(/\//g, "-");
   const previewUrl = `${previewUrlBase}-git-${branchSlug}.vercel.app`;
 

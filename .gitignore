@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.yarn/
+.pnp.*
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# iOS
+frontend/ios/App/Pods/
+frontend/ios/App/App.xcworkspace/xcuserdata/
+frontend/ios/App/App.xcodeproj/xcuserdata/
+frontend/ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+DerivedData/
+
+# Android (if added later)
+frontend/android/app/build/
+frontend/android/.gradle/
+frontend/android/build/
+*.apk
+*.aab
+
+# Environment files
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+
+# Capacitor
+frontend/capacitor.config.ts.bak
+
+# Backend
+backend/node_modules/
+backend/.env
+
+# Misc
+*.tgz
+.cache/

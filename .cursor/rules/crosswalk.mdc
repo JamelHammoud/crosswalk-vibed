@@ -1,0 +1,158 @@
+---
+description: Crosswalk app development guidelines and documentation
+globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx"
+alwaysApply: true
+---
+
+# Crosswalk App - Cursor Rules
+
+## Rule #1: Keep Documenting
+
+Always update this rules file when making significant changes to the codebase. Document new features, patterns, and conventions as they are implemented.
+
+---
+
+## Project Overview
+
+Crosswalk is a location-based messaging app where users can "drop" messages at their physical location. Others can discover and read these drops when they're nearby.
+
+### Tech Stack
+
+- **Frontend**: React 19, TypeScript, Vite 7, Tailwind CSS v4, MapLibre GL JS, Zustand, Capacitor
+- **Backend**: Bun, Hono, SQLite (bun:sqlite), Drizzle ORM, WebSockets
+- **Auth**: Sign in with Apple (native + web)
+
+---
+
+## Core Concepts
+
+### Drops
+
+Messages pinned to geographic locations with configurable properties:
+
+- **Range**: `close` (15m), `far` (100m), `anywhere` (no limit) - default is `close`
+- **Effect**: Emoji explosion when opened (`none`, `confetti`, `rainbow`, `stars`, `spooky`, `gross`, `uhoh`)
+- **Expiry**: Optional expiration (hours, days, months, or forever)
+- **Ownership**: Users can always read their own drops regardless of distance
+
+### High-fives
+
+Like system for drops. When someone high-fives your drop, you receive a notification.
+
+### Clustering
+
+Drops that are physically close cluster together at all zoom levels (clusterMaxZoom: 19, clusterRadius: 40).
+
+---
+
+## UI Conventions
+
+### Theme Colors
+
+User-selectable primary color stored in localStorage:
+
+- `#FDE047` (yellow - default)
+- `#8FDBF6` (blue)
+- `#FB92DE` (pink)
+- `#99D789` (green)
+
+### Bottom Navigation
+
+- Pin icon: Map view (active = solid, inactive = 30% opacity)
+- Binoculars: Explore (not implemented yet)
+- Plus button: Drop composer (uses theme color)
+- Bell: Activity/notifications (shows unread badge)
+- Profile avatar: User settings
+- Active indicator: Small dot below active tab (`#1B1919`)
+
+### Light Mode
+
+App uses light mode throughout, including CartoDB Voyager map tiles.
+
+---
+
+## Code Patterns
+
+### Range Checking
+
+Always use `isWithinDropRange(range, distance, isOwnDrop)` - the third parameter ensures users can always read their own drops.
+
+### Map Persistence
+
+The map container stays mounted when switching tabs (hidden via CSS) to preserve state and prevent white flash.
+
+### WebSocket Events
+
+- `new_drop`: Broadcast when a drop is created
+- `delete_drop`: Broadcast when a drop is deleted
+- `highfive`: Broadcast when someone high-fives a drop
+
+### Animation Classes
+
+- `animate-fade-in`: Backdrop fade
+- `animate-slide-up`: Bottom drawer
+- `animate-scale-in`: Modal scale (uses CSS `scale` property, not `transform`, to avoid conflicts with positioning)
+
+---
+
+## Database Schema
+
+### Tables
+
+- `users`: id, appleUserId, email, name, createdAt
+- `drops`: id, userId, message, latitude, longitude, range, effect, expiresAt, createdAt
+- `highfives`: id, dropId, userId, createdAt
+- `notifications`: id, userId, type, dropId, fromUserId, read, createdAt
+
+---
+
+## API Endpoints
+
+### Auth
+
+- `POST /auth/apple` - Sign in with Apple
+- `GET /auth/me` - Get current user
+- `PATCH /auth/me` - Update username/theme
+- `POST /auth/me/generate-username` - Generate new random username
+
+### Drops
+
+- `GET /drops` - Get drops (with lat, lng, radius params)
+- `POST /drops` - Create drop
+- `GET /drops/:id` - Get single drop
+- `DELETE /drops/:id` - Delete drop (within 15min window)
+- `POST /drops/:id/highfive` - High-five a drop
+- `DELETE /drops/:id/highfive` - Remove high-five
+- `GET /drops/:id/highfive` - Check if user high-fived
+
+### Notifications
+
+- `GET /notifications` - Get user notifications
+- `GET /notifications/unread-count` - Get unread count
+- `PATCH /notifications/:id/read` - Mark as read
+- `POST /notifications/read-all` - Mark all as read
+
+---
+
+## Development Notes
+
+### Environment Variables (Frontend)
+
+- `VITE_API_URL` - Backend API URL
+- `VITE_DEV_BYPASS_AUTH` - Skip auth for development
+- `VITE_APPLE_CLIENT_ID` - Apple Sign In client ID
+- `VITE_APPLE_REDIRECT_URI` - Apple Sign In redirect
+
+### Running Locally
+
+```bash
+# Backend
+cd backend && bun run dev
+
+# Frontend
+cd frontend && yarn dev
+```
+
+### Database Migrations
+
+Use `bunx drizzle-kit push` in the backend directory. For interactive prompts, manually create tables with sqlite3 if needed.

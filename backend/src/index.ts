@@ -20,6 +20,7 @@ app.use(
         "https://player.scrns.io",
         "https://server.scrns.io",
         "https://crswlk.vercel.app",
+        "https://crswlk-be.vercel.app",
         "capacitor://localhost",
         "ionic://localhost",
       ];
@@ -30,6 +31,8 @@ app.use(
       }
       return allowedOrigins[0];
     },
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );

@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await db.delete(schema.drops).where(eq(schema.drops.id, id));
 
     // Broadcast deletion to all clients
-    broadcastDeleteDrop(id);
+    await broadcastDeleteDrop(id);
 
     return res.json({ success: true });
   }

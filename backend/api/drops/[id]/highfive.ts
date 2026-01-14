@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
 
       // Broadcast to drop owner
-      broadcastHighfive({
+      await broadcastHighfive({
         dropId,
         toUserId: drop.userId,
         fromUserId: userId,

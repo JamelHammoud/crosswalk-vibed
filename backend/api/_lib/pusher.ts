@@ -8,23 +8,37 @@ const pusher = new Pusher({
   useTLS: true,
 });
 
-export function broadcastNewDrop(drop: any) {
-  pusher.trigger("drops", "new_drop", drop);
+export async function broadcastNewDrop(drop: any) {
+  try {
+    await pusher.trigger("drops", "new_drop", drop);
+    console.log("Pusher: broadcasted new_drop", drop.id);
+  } catch (err) {
+    console.error("Pusher broadcast error (new_drop):", err);
+  }
 }
 
-export function broadcastDeleteDrop(dropId: string) {
-  pusher.trigger("drops", "delete_drop", { id: dropId });
+export async function broadcastDeleteDrop(dropId: string) {
+  try {
+    await pusher.trigger("drops", "delete_drop", { id: dropId });
+    console.log("Pusher: broadcasted delete_drop", dropId);
+  } catch (err) {
+    console.error("Pusher broadcast error (delete_drop):", err);
+  }
 }
 
-export function broadcastHighfive(data: {
+export async function broadcastHighfive(data: {
   dropId: string;
   toUserId: string;
   fromUserId: string;
   fromUserName: string | null;
   notificationId: string;
 }) {
-  // Send to user-specific channel so only they receive it
-  pusher.trigger(`user-${data.toUserId}`, "highfive", data);
+  try {
+    await pusher.trigger(`user-${data.toUserId}`, "highfive", data);
+    console.log("Pusher: broadcasted highfive to user", data.toUserId);
+  } catch (err) {
+    console.error("Pusher broadcast error (highfive):", err);
+  }
 }
 
 export { pusher };

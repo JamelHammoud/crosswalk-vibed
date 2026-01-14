@@ -163,7 +163,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     // Broadcast to all connected clients
-    broadcastNewDrop(newDrop);
+    await broadcastNewDrop(newDrop);
 
     return res.json(newDrop);
   }

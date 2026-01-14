@@ -51,6 +51,7 @@ export function MapView() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [clusterDrops, setClusterDrops] = useState<Drop[] | null>(null);
   const [showRecenterButton, setShowRecenterButton] = useState(false);
+  const [isWaving, setIsWaving] = useState(false);
 
   const {
     user,
@@ -86,6 +87,11 @@ export function MapView() {
     } catch (err) {
       console.error("Failed to load unread count:", err);
     }
+  };
+
+  const handleWaveHello = () => {
+    setIsWaving(true);
+    setTimeout(() => setIsWaving(false), 2000);
   };
 
   useEffect(() => {
@@ -445,6 +451,33 @@ export function MapView() {
             </svg>
           </button>
         )}
+
+        {/* Wave Hello Button */}
+        <button
+          onClick={handleWaveHello}
+          className="absolute bottom-24 left-4 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center border border-gray-200 shadow-lg z-10"
+        >
+          <span 
+            className={`text-2xl ${isWaving ? 'animate-wave' : ''}`}
+            style={{
+              display: 'inline-block',
+              transformOrigin: '70% 70%'
+            }}
+          >
+            👋
+          </span>
+        </button>
+
+        {/* Wave Hello Animation */}
+        {isWaving && (
+          <div className="absolute inset-0 pointer-events-none z-20">
+            <div className="absolute left-4 bottom-24 animate-float-up">
+              <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+                <span className="text-lg font-medium">Hello! 👋</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {activeTab === "activity" && <ActivityView />}
@@ -558,6 +591,46 @@ export function MapView() {
           onClose={() => setClusterDrops(null)}
         />
       )}
+
+      <style jsx global>{`
+        @keyframes wave {
+          0% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-8deg); }
+          30% { transform: rotate(14deg); }
+          40% { transform: rotate(-4deg); }
+          50% { transform: rotate(10deg); }
+          60% { transform: rotate(0deg); }
+          100% { transform: rotate(0deg); }
+        }
+        
+        .animate-wave {
+          animation: wave 1s ease-in-out;
+        }
+        
+        @keyframes float-up {
+          0% {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          20% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          80% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-40px);
+          }
+        }
+        
+        .animate-float-up {
+          animation: float-up 2s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }

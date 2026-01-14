@@ -51,6 +51,7 @@ export function MapView() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [clusterDrops, setClusterDrops] = useState<Drop[] | null>(null);
   const [showRecenterButton, setShowRecenterButton] = useState(false);
+  const [isWaving, setIsWaving] = useState(false);
 
   const {
     user,
@@ -408,6 +409,11 @@ export function MapView() {
     });
   }, [currentLocation]);
 
+  const handleWave = () => {
+    setIsWaving(true);
+    setTimeout(() => setIsWaving(false), 2000);
+  };
+
   const handleOpenProfile = () => {
     setIsProfileOpen(true);
   };
@@ -427,6 +433,33 @@ export function MapView() {
         style={{ display: activeTab === "map" ? "block" : "none" }}
       >
         <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+
+        {/* Wave Button */}
+        <button
+          onClick={handleWave}
+          className={`absolute top-4 right-4 w-14 h-14 rounded-full bg-primary backdrop-blur-sm flex items-center justify-center shadow-lg z-10 transition-transform ${
+            isWaving ? "scale-110" : ""
+          }`}
+        >
+          <span
+            className={`text-2xl ${isWaving ? "wave-animation" : ""}`}
+            style={{
+              display: "inline-block",
+              transformOrigin: "70% 70%",
+            }}
+          >
+            👋
+          </span>
+        </button>
+
+        {/* Wave animation elements */}
+        {isWaving && (
+          <>
+            <div className="absolute top-4 right-4 w-14 h-14 rounded-full border-2 border-primary/40 pointer-events-none wave-ripple-1" />
+            <div className="absolute top-4 right-4 w-14 h-14 rounded-full border-2 border-primary/30 pointer-events-none wave-ripple-2" />
+            <div className="absolute top-4 right-4 w-14 h-14 rounded-full border-2 border-primary/20 pointer-events-none wave-ripple-3" />
+          </>
+        )}
 
         {showRecenterButton && (
           <button
@@ -558,6 +591,62 @@ export function MapView() {
           onClose={() => setClusterDrops(null)}
         />
       )}
+
+      <style jsx>{`
+        @keyframes wave {
+          0% {
+            transform: rotate(0deg);
+          }
+          10% {
+            transform: rotate(14deg);
+          }
+          20% {
+            transform: rotate(-8deg);
+          }
+          30% {
+            transform: rotate(14deg);
+          }
+          40% {
+            transform: rotate(-4deg);
+          }
+          50% {
+            transform: rotate(10deg);
+          }
+          60% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(0deg);
+          }
+        }
+
+        @keyframes ripple {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+
+        .wave-animation {
+          animation: wave 0.6s ease-in-out;
+        }
+
+        .wave-ripple-1 {
+          animation: ripple 1.5s ease-out;
+        }
+
+        .wave-ripple-2 {
+          animation: ripple 1.5s ease-out 0.3s;
+        }
+
+        .wave-ripple-3 {
+          animation: ripple 1.5s ease-out 0.6s;
+        }
+      `}</style>
     </div>
   );
 }

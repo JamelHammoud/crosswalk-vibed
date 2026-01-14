@@ -45,20 +45,22 @@ export const notifications = sqliteTable("notifications", {
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
 });
 
-export const vibeBranches = sqliteTable("vibe_branches", {
+export const vibes = sqliteTable("vibes", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
-    .unique()
     .references(() => users.id),
+  name: text("name").notNull(),
   branchName: text("branch_name").notNull(),
-  hasChanges: integer("has_changes").notNull().default(0),
-  lastSyncAt: text("last_sync_at"),
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
+  deletedAt: text("deleted_at"),
 });
 
 export const vibeMessages = sqliteTable("vibe_messages", {
   id: text("id").primaryKey(),
+  vibeId: text("vibe_id")
+    .notNull()
+    .references(() => vibes.id),
   userId: text("user_id")
     .notNull()
     .references(() => users.id),

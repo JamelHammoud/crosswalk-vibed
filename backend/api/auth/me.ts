@@ -37,7 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (name !== undefined) {
       if (name.length < 2 || name.length > 20) {
-        return res.status(400).json({ message: "Username must be 2-20 characters" });
+        return res
+          .status(400)
+          .json({ message: "Username must be 2-20 characters" });
       }
       if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
         return res.status(400).json({

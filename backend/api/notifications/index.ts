@@ -29,7 +29,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt: schema.notifications.createdAt,
     })
     .from(schema.notifications)
-    .leftJoin(schema.users, eq(schema.notifications.fromUserId, schema.users.id))
+    .leftJoin(
+      schema.users,
+      eq(schema.notifications.fromUserId, schema.users.id)
+    )
     .where(eq(schema.notifications.userId, userId))
     .orderBy(desc(schema.notifications.createdAt))
     .limit(50);

@@ -19,6 +19,72 @@ interface VercelDeployment {
   createdAt: number;
 }
 
+export interface DeploymentStatus {
+  state: "BUILDING" | "READY" | "ERROR" | "QUEUED" | "CANCELED" | "NOT_FOUND";
+  url?: string;
+  createdAt?: number;
+}
+
+export async function getDeploymentStatus(
+  branchName: string
+): Promise<DeploymentStatus> {
+  if (!VERCEL_TOKEN || !VERCEL_PROJECT_ID) {
+    return { state: "NOT_FOUND" };
+  }
+
+  try {
+    const params = new URLSearchParams({
+      limit: "20",
+      projectId: VERCEL_PROJECT_ID,
+    });
+
+    if (VERCEL_TEAM_ID) {
+      params.set("teamId", VERCEL_TEAM_ID);
+    }
+
+    const response = await fetch(
+      `https://api.vercel.com/v6/deployments?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${VERCEL_TOKEN}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return { state: "NOT_FOUND" };
+    }
+
+    const data = await response.json();
+    const deployments: VercelDeployment[] = data.deployments || [];
+
+    const deployment = deployments.find((d) => {
+      const possibleBranches = [
+        d.meta?.githubCommitRef,
+        d.gitSource?.ref,
+        d.source,
+      ].filter(Boolean);
+
+      return possibleBranches.some(
+        (b) => b === branchName || b?.toLowerCase() === branchName.toLowerCase()
+      );
+    });
+
+    if (!deployment) {
+      return { state: "NOT_FOUND" };
+    }
+
+    return {
+      state: deployment.state as DeploymentStatus["state"],
+      url:
+        deployment.state === "READY" ? `https://${deployment.url}` : undefined,
+      createdAt: deployment.createdAt,
+    };
+  } catch {
+    return { state: "NOT_FOUND" };
+  }
+}
+
 export async function getDeploymentForBranch(
   branchName: string
 ): Promise<string | null> {

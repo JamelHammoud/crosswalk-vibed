@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "drizzle-orm";
-import { db, schema } from "../_lib/db.js";
-import { verifyAuth } from "../_lib/auth.js";
-import { cors } from "../_lib/cors.js";
+import { eq, and, isNull, sql } from "drizzle-orm";
+import { db, schema } from "../../_lib/db.js";
+import { verifyAuth } from "../../_lib/auth.js";
+import { cors } from "../../_lib/cors.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (cors(req, res)) return;
@@ -17,14 +17,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { userId } = auth;
+  const vibeId = req.query.id as string;
 
   try {
-    // Soft delete - keep records
+    const vibeData = await db
+      .select()
+      .from(schema.vibes)
+      .where(and(eq(schema.vibes.id, vibeId), eq(schema.vibes.userId, userId)))
+      .get();
+
+    if (!vibeData) {
+      return res.status(404).json({ error: "Vibe not found" });
+    }
+
     await db
       .update(schema.vibeMessages)
       .set({ deletedAt: new Date().toISOString() })
       .where(
-        sql`${schema.vibeMessages.userId} = ${userId} AND ${schema.vibeMessages.deletedAt} IS NULL`
+        sql`${schema.vibeMessages.vibeId} = ${vibeId} AND ${schema.vibeMessages.deletedAt} IS NULL`
       );
 
     return res.json({ success: true });

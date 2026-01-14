@@ -127,58 +127,175 @@ export const api = {
   },
 
   vibe: {
-    getBranchStatus: () =>
+    list: () =>
       request<{
-        branch: string | null;
+        vibes: Array<{
+          id: string;
+          name: string;
+          branchName: string;
+          hasChanges: boolean;
+          changedFiles: string[];
+          aheadBy: number;
+          createdAt: string;
+        }>;
+      }>("/vibe"),
+
+    create: (name: string) =>
+      request<{
+        id: string;
+        name: string;
+        branchName: string;
+        createdAt: string;
+      }>("/vibe", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      }),
+
+    get: (vibeId: string) =>
+      request<{
+        id: string;
+        name: string;
+        branchName: string;
         hasChanges: boolean;
         changedFiles: string[];
         aheadBy: number;
         behindBy: number;
-        lastSync: string | null;
-      }>("/vibe/branch"),
+        createdAt: string;
+      }>(`/vibe/${vibeId}`),
 
-    chat: (message: string) =>
+    delete: (vibeId: string) =>
+      request<{ success: boolean }>(`/vibe/${vibeId}`, {
+        method: "DELETE",
+      }),
+
+    chat: (vibeId: string, message: string) =>
       request<{
         message: string;
         toolsUsed?: string[];
-        branchStatus?: {
-          branch: string | null;
+        vibe: {
+          id: string;
+          name: string;
+          branchName: string;
           hasChanges: boolean;
           changedFiles: string[];
           aheadBy: number;
         };
-      }>("/vibe/chat", {
+      }>(`/vibe/${vibeId}/chat`, {
         method: "POST",
         body: JSON.stringify({ message }),
       }),
 
-    openPR: (title?: string, body?: string) =>
-      request<{ prNumber: number; prUrl: string }>("/vibe/pr", {
+    chatStream: (
+      vibeId: string,
+      message: string,
+      onEvent: (event: {
+        type:
+          | "status"
+          | "tool_start"
+          | "tool_end"
+          | "done"
+          | "error"
+          | "deployment";
+        message?: string;
+        tool?: string;
+        path?: string;
+        success?: boolean;
+        toolsUsed?: string[];
+        state?: "QUEUED" | "BUILDING" | "READY" | "ERROR";
+        url?: string;
+        vibe?: {
+          id: string;
+          name: string;
+          branchName: string;
+          hasChanges: boolean;
+          changedFiles: string[];
+          aheadBy: number;
+        };
+      }) => void
+    ) => {
+      const token = localStorage.getItem("auth_token");
+      return fetch(`${API_BASE}/vibe/${vibeId}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({ message }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          const err = await res
+            .json()
+            .catch(() => ({ message: "Request failed" }));
+          throw new Error(err.message || `HTTP ${res.status}`);
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No response body");
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                onEvent(data);
+              } catch (e) {
+                console.error("Failed to parse SSE:", line);
+              }
+            }
+          }
+        }
+      });
+    },
+
+    openPR: (vibeId: string, title?: string, body?: string) =>
+      request<{ prNumber: number; prUrl: string }>(`/vibe/${vibeId}/pr`, {
         method: "POST",
         body: JSON.stringify({ title, body }),
       }),
 
-    revert: () =>
-      request<{ success: boolean; message: string }>("/vibe/revert", {
+    revert: (vibeId: string) =>
+      request<{ success: boolean; message: string }>(`/vibe/${vibeId}/revert`, {
         method: "POST",
       }),
 
-    getPreviewUrl: () =>
-      request<{ previewUrl: string; branch: string }>("/vibe/preview-url"),
+    getPreviewUrl: (vibeId: string) =>
+      request<{ previewUrl: string; branch: string }>(
+        `/vibe/${vibeId}/preview-url`
+      ),
 
-    clearHistory: () =>
-      request<{ success: boolean }>("/vibe/history", {
+    clearHistory: (vibeId: string) =>
+      request<{ success: boolean }>(`/vibe/${vibeId}/history`, {
         method: "DELETE",
       }),
 
-    getFile: (path: string) =>
+    getMessages: (vibeId: string) =>
+      request<{
+        messages: Array<{
+          id: string;
+          role: "user" | "assistant";
+          content: string;
+          createdAt: string;
+        }>;
+      }>(`/vibe/${vibeId}/messages`),
+
+    getFile: (vibeId: string, path: string) =>
       request<{ content: string; sha: string }>(
-        `/vibe/file?path=${encodeURIComponent(path)}`
+        `/vibe/${vibeId}/file?path=${encodeURIComponent(path)}`
       ),
 
-    listFiles: (path: string = "") =>
+    listFiles: (vibeId: string, path: string = "") =>
       request<{
         files: { name: string; path: string; type: "file" | "dir" }[];
-      }>(`/vibe/files?path=${encodeURIComponent(path)}`),
+      }>(`/vibe/${vibeId}/files?path=${encodeURIComponent(path)}`),
   },
 };

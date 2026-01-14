@@ -10,11 +10,14 @@ interface Message {
   toolsUsed?: string[];
 }
 
-interface BranchStatus {
-  branch: string | null;
+interface Vibe {
+  id: string;
+  name: string;
+  branchName: string;
   hasChanges: boolean;
   changedFiles: string[];
   aheadBy: number;
+  createdAt: string;
 }
 
 interface VibeChatProps {
@@ -24,38 +27,31 @@ interface VibeChatProps {
 
 export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   const { user, themeColor } = useAppStore();
+  const [vibes, setVibes] = useState<Vibe[]>([]);
+  const [selectedVibe, setSelectedVibe] = useState<Vibe | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [branchStatus, setBranchStatus] = useState<BranchStatus>({
-    branch: null,
-    hasChanges: false,
-    changedFiles: [],
-    aheadBy: 0,
-  });
+  const [isLoadingVibes, setIsLoadingVibes] = useState(false);
   const [showChangedFiles, setShowChangedFiles] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [isCreatingVibe, setIsCreatingVibe] = useState(false);
+  const [newVibeName, setNewVibeName] = useState("");
+  const [progressStatus, setProgressStatus] = useState<string | null>(null);
+  const [lastToolAction, setLastToolAction] = useState<string | null>(null);
+  const [deploymentStatus, setDeploymentStatus] = useState<{
+    state: "QUEUED" | "BUILDING" | "READY" | "ERROR" | null;
+    message: string;
+    url?: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      loadBranchStatus();
-      inputRef.current?.focus();
-      if (messages.length === 0) {
-        setMessages([
-          {
-            id: "welcome",
-            role: "assistant",
-            content: `Hey ${
-              user?.name || "there"
-            }!\n\nWelcome to **Vibe²**, where you can dream up new experiences for this app.\n\nSimply ask me to add things, change things, etc., and I'll let you know when I'm done. Then you can use your new version of Crosswalk.\n\nWant to let others use it? Open a PR to the repo.`,
-            timestamp: new Date(),
-          },
-        ]);
-      }
+      loadVibes();
     }
   }, [isOpen]);
 
@@ -63,22 +59,116 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const loadBranchStatus = async () => {
+  const loadVibes = async () => {
+    setIsLoadingVibes(true);
     try {
-      const status = await api.vibe.getBranchStatus();
-      setBranchStatus({
-        branch: status.branch,
-        hasChanges: status.hasChanges,
-        changedFiles: status.changedFiles || [],
-        aheadBy: status.aheadBy || 0,
-      });
+      const result = await api.vibe.list();
+      setVibes(result.vibes);
     } catch (err) {
-      console.error("Failed to load branch status:", err);
+      console.error("Failed to load vibes:", err);
+    } finally {
+      setIsLoadingVibes(false);
     }
   };
 
+  const selectVibe = async (vibe: Vibe) => {
+    setSelectedVibe(vibe);
+    setIsLoading(true);
+
+    const welcomeMessage: Message = {
+      id: "welcome",
+      role: "assistant",
+      content: `Hey ${
+        user?.name || "there"
+      }!\n\nWelcome to **Vibe²**, where you can dream up new experiences for this app.\n\nSimply ask me to add things, change things, etc., and I'll let you know when I'm done. Then you can use your new version of Crosswalk.\n\nWant to let others use it? Open a PR to the repo.`,
+      timestamp: new Date(),
+    };
+
+    try {
+      const result = await api.vibe.getMessages(vibe.id);
+      if (result.messages.length > 0) {
+        setMessages(
+          result.messages.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.createdAt),
+          }))
+        );
+      } else {
+        setMessages([welcomeMessage]);
+      }
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+      setMessages([welcomeMessage]);
+    } finally {
+      setIsLoading(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const createNewVibe = async () => {
+    if (!newVibeName.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const newVibe = await api.vibe.create(newVibeName.trim());
+      setVibes((prev) => [
+        { ...newVibe, hasChanges: false, changedFiles: [], aheadBy: 0 },
+        ...prev,
+      ]);
+      setSelectedVibe({
+        ...newVibe,
+        hasChanges: false,
+        changedFiles: [],
+        aheadBy: 0,
+      });
+      setNewVibeName("");
+      setIsCreatingVibe(false);
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: `Hey ${
+            user?.name || "there"
+          }!\n\nWelcome to **Vibe²**, where you can dream up new experiences for this app.\n\nSimply ask me to add things, change things, etc., and I'll let you know when I'm done. Then you can use your new version of Crosswalk.\n\nWant to let others use it? Open a PR to the repo.`,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err) {
+      console.error("Failed to create vibe:", err);
+      alert("Failed to create vibe");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteVibe = async (vibeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Delete this vibe?")) return;
+
+    try {
+      await api.vibe.delete(vibeId);
+      setVibes((prev) => prev.filter((v) => v.id !== vibeId));
+      if (selectedVibe?.id === vibeId) {
+        setSelectedVibe(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Failed to delete vibe:", err);
+    }
+  };
+
+  const goBack = () => {
+    setSelectedVibe(null);
+    setMessages([]);
+    setShowChangedFiles(false);
+    setDeploymentStatus(null);
+    loadVibes();
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !selectedVibe) return;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -88,30 +178,58 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const messageText = input.trim();
     setInput("");
     setIsLoading(true);
+    setProgressStatus("Thinking...");
+    setLastToolAction(null);
+    setDeploymentStatus(null);
 
     try {
-      const response = await api.vibe.chat(input.trim());
-
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: response.message,
-        timestamp: new Date(),
-        toolsUsed: response.toolsUsed,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      if (response.branchStatus) {
-        setBranchStatus({
-          branch: response.branchStatus.branch,
-          hasChanges: response.branchStatus.hasChanges,
-          changedFiles: response.branchStatus.changedFiles || [],
-          aheadBy: response.branchStatus.aheadBy || 0,
-        });
-      }
+      await api.vibe.chatStream(selectedVibe.id, messageText, (event) => {
+        if (event.type === "status") {
+          setProgressStatus(event.message || "Processing...");
+        } else if (event.type === "tool_start") {
+          setProgressStatus("Working...");
+          setLastToolAction(event.message || `Using ${event.tool}...`);
+        } else if (event.type === "tool_end") {
+          setLastToolAction(event.message || `Finished ${event.tool}`);
+        } else if (event.type === "deployment") {
+          setDeploymentStatus({
+            state: event.state || null,
+            message: event.message || "",
+            url: event.url,
+          });
+        } else if (event.type === "done") {
+          const assistantMessage: Message = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: event.message || "",
+            timestamp: new Date(),
+            toolsUsed: event.toolsUsed,
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+          if (event.vibe) {
+            setSelectedVibe((prev) =>
+              prev ? { ...prev, ...event.vibe } : null
+            );
+          }
+          setIsLoading(false);
+          setProgressStatus(null);
+          setLastToolAction(null);
+        } else if (event.type === "error") {
+          const errorMessage: Message = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: event.message || "Something went wrong",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+          setIsLoading(false);
+          setProgressStatus(null);
+          setLastToolAction(null);
+        }
+      });
     } catch (err) {
       const errorMessage: Message = {
         id: crypto.randomUUID(),
@@ -121,8 +239,9 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
+      setProgressStatus(null);
+      setLastToolAction(null);
     }
   };
 
@@ -134,9 +253,10 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleOpenPR = async () => {
+    if (!selectedVibe) return;
     setIsLoading(true);
     try {
-      const result = await api.vibe.openPR();
+      const result = await api.vibe.openPR(selectedVibe.id);
       const prMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -158,6 +278,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleRevert = async () => {
+    if (!selectedVibe) return;
     if (
       !confirm(
         "This will reset your branch to production and clear chat history. Continue?"
@@ -168,14 +289,12 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
 
     setIsReverting(true);
     try {
-      await api.vibe.revert();
-      setBranchStatus((prev) => ({
-        ...prev,
-        hasChanges: false,
-        changedFiles: [],
-        aheadBy: 0,
-      }));
-      // Clear all messages and show fresh welcome
+      await api.vibe.revert(selectedVibe.id);
+      setSelectedVibe((prev) =>
+        prev
+          ? { ...prev, hasChanges: false, changedFiles: [], aheadBy: 0 }
+          : null
+      );
       setMessages([
         {
           id: crypto.randomUUID(),
@@ -192,9 +311,10 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleClearHistory = async () => {
+    if (!selectedVibe) return;
     if (!confirm("Clear chat history?")) return;
     try {
-      await api.vibe.clearHistory();
+      await api.vibe.clearHistory(selectedVibe.id);
       setMessages([
         {
           id: "cleared",
@@ -209,17 +329,15 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleViewPreview = async () => {
+    if (!selectedVibe) return;
     setIsLoadingPreview(true);
     try {
-      const result = await api.vibe.getPreviewUrl();
+      const result = await api.vibe.getPreviewUrl(selectedVibe.id);
       const { previewUrl: url, source, message } = result as any;
-      console.log("Preview URL:", url, "source:", source);
 
       if (source === "vercel-api") {
-        // Show preview in iframe
         setPreviewUrl(url);
       } else {
-        // Fallback: show message in chat
         const urlMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
@@ -247,28 +365,151 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      <div className="relative flex items-center justify-between px-4 py-3 overflow-hidden">
-        {/* Night sky header background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0c29] via-[#302b63] to-[#24243e]" />
-
-        {/* Stars in header */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[20%] left-[5%] opacity-60" />
-          <div className="absolute w-1 h-1 bg-white rounded-full top-[30%] left-[15%] animate-[twinkle_2s_ease-in-out_infinite]" />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[60%] left-[25%] opacity-40" />
-          <div className="absolute w-1 h-1 bg-white rounded-full top-[40%] left-[35%] animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[25%] left-[55%] opacity-50" />
-          <div className="absolute w-1 h-1 bg-white rounded-full top-[70%] left-[65%] animate-[twinkle_3s_ease-in-out_infinite_1s]" />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[35%] left-[75%] opacity-70" />
-          <div className="absolute w-1 h-1 bg-white rounded-full top-[55%] left-[85%] animate-[twinkle_2.2s_ease-in-out_infinite_0.3s]" />
-          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[45%] left-[95%] opacity-40" />
+  // Vibe list view
+  if (!selectedVibe) {
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        {/* Header */}
+        <div className="relative flex items-center justify-between px-4 py-3 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0f0c29] via-[#302b63] to-[#24243e]" />
+          <button
+            onClick={onClose}
+            className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
+          >
+            <svg
+              className="w-6 h-6 text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="relative z-10 text-lg font-bold text-white">Vibe²</h1>
+          <div className="w-10" />
         </div>
 
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {isLoadingVibes ? (
+            <div className="flex items-center justify-center h-32">
+              <span className="text-gray-400">Loading vibes...</span>
+            </div>
+          ) : (
+            <>
+              {/* Create new vibe */}
+              {isCreatingVibe ? (
+                <div className="mb-4 p-4 bg-gray-50 rounded-2xl">
+                  <input
+                    type="text"
+                    value={newVibeName}
+                    onChange={(e) => setNewVibeName(e.target.value)}
+                    placeholder="Name your vibe (e.g., Dark Mode)"
+                    className="w-full h-12 bg-white border border-gray-200 rounded-xl px-4 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && createNewVibe()}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsCreatingVibe(false)}
+                      className="flex-1 h-10 bg-gray-200 text-ink rounded-xl font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={createNewVibe}
+                      disabled={!newVibeName.trim() || isLoading}
+                      className="flex-1 h-10 bg-purple-500 text-white rounded-xl font-medium disabled:opacity-50"
+                    >
+                      {isLoading ? "Creating..." : "Create"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsCreatingVibe(true)}
+                  className="w-full h-14 mb-4 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  New Vibe
+                </button>
+              )}
+
+              {/* Vibe list */}
+              {vibes.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">No vibes yet</p>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Create one to start building!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {vibes.map((v) => (
+                    <button
+                      key={v.id}
+                      onClick={() => selectVibe(v)}
+                      className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-2xl text-left transition-colors relative group"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-ink text-lg">
+                            {v.name}
+                          </h3>
+                          <p className="text-gray-400 text-sm font-mono mt-1">
+                            {v.branchName}
+                          </p>
+                          {v.hasChanges && (
+                            <span className="inline-block mt-2 px-2 py-0.5 bg-purple-100 text-purple-600 text-xs font-bold rounded-full">
+                              {v.aheadBy}{" "}
+                              {v.aheadBy === 1 ? "change" : "changes"}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={(e) => deleteVibe(v.id, e)}
+                          className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Chat view (selected vibe)
+  return (
+    <div className="fixed inset-0 bg-white z-50 flex flex-col">
+      {/* Header */}
+      <div className="relative flex items-center justify-between px-4 py-3 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0c29] via-[#302b63] to-[#24243e]" />
         <button
-          onClick={onClose}
-          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+          onClick={goBack}
+          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
         >
           <svg
             className="w-6 h-6 text-white"
@@ -281,24 +522,21 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
           </svg>
         </button>
         <div className="relative z-10 text-center flex-1">
-          <h1 className="text-lg font-bold text-white drop-shadow-lg">Vibe²</h1>
-          {branchStatus.branch && (
+          <h1 className="text-lg font-bold text-white">{selectedVibe.name}</h1>
+          {selectedVibe.hasChanges && (
             <button
               onClick={() => setShowChangedFiles(!showChangedFiles)}
-              className="text-xs text-white/70 flex items-center justify-center gap-1 mx-auto hover:text-white transition-colors"
+              className="text-xs text-white/70 flex items-center justify-center gap-1 mx-auto"
             >
-              <span className="font-mono">{branchStatus.branch}</span>
-              {branchStatus.hasChanges && (
-                <span className="px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold bg-white/20">
-                  {branchStatus.aheadBy} changes
-                </span>
-              )}
+              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">
+                {selectedVibe.aheadBy} changes
+              </span>
             </button>
           )}
         </div>
         <button
           onClick={handleClearHistory}
-          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
         >
           <svg
             className="w-5 h-5 text-white/60"
@@ -310,16 +548,9 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
-
-        <style>{`
-          @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-          }
-        `}</style>
       </div>
 
-      {showChangedFiles && branchStatus.changedFiles.length > 0 && (
+      {showChangedFiles && selectedVibe.changedFiles.length > 0 && (
         <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-ink">Changed Files</span>
@@ -328,11 +559,11 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
               disabled={isReverting}
               className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-lg font-medium disabled:opacity-50"
             >
-              {isReverting ? "Reverting..." : "↩️ Revert to Production"}
+              {isReverting ? "Reverting..." : "↩️ Revert"}
             </button>
           </div>
           <div className="space-y-1 max-h-32 overflow-y-auto">
-            {branchStatus.changedFiles.map((file) => (
+            {selectedVibe.changedFiles.map((file) => (
               <div
                 key={file}
                 className="text-xs font-mono text-gray-600 flex items-center gap-2"
@@ -345,6 +576,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         </div>
       )}
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
@@ -360,7 +592,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
                   : "bg-gray-100 text-ink"
               }`}
             >
-              <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none">
+              <div className="text-sm whitespace-pre-wrap">
                 {formatMessage(message.content)}
               </div>
               {message.toolsUsed && message.toolsUsed.length > 0 && (
@@ -390,22 +622,56 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500">
-                  Reading & writing code...
+            <div className="bg-gray-100 rounded-2xl px-4 py-3 min-w-[200px]">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-gray-600 font-medium">
+                  {progressStatus || "Thinking..."}
                 </span>
+              </div>
+              {lastToolAction && (
+                <div className="text-xs text-gray-500 pl-6">
+                  {lastToolAction}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {deploymentStatus && (
+          <div className="flex justify-start">
+            <div
+              className={`rounded-2xl px-4 py-3 ${
+                deploymentStatus.state === "READY"
+                  ? "bg-green-100"
+                  : deploymentStatus.state === "ERROR"
+                  ? "bg-red-100"
+                  : "bg-amber-100"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {deploymentStatus.state === "BUILDING" ||
+                deploymentStatus.state === "QUEUED" ? (
+                  <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                ) : null}
+                <span
+                  className={`text-sm font-medium ${
+                    deploymentStatus.state === "READY"
+                      ? "text-green-700"
+                      : deploymentStatus.state === "ERROR"
+                      ? "text-red-700"
+                      : "text-amber-700"
+                  }`}
+                >
+                  {deploymentStatus.message}
+                </span>
+                {deploymentStatus.state === "READY" && deploymentStatus.url && (
+                  <button
+                    onClick={() => setPreviewUrl(deploymentStatus.url!)}
+                    className="ml-2 px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-lg"
+                  >
+                    View
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -413,12 +679,13 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {branchStatus.hasChanges && (
+      {/* Action bar */}
+      {selectedVibe.hasChanges && (
         <div className="px-4 py-2 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500">
           <div className="flex items-center justify-between">
             <span className="text-white text-sm font-medium">
-              {branchStatus.aheadBy}{" "}
-              {branchStatus.aheadBy === 1 ? "commit" : "commits"} ahead
+              {selectedVibe.aheadBy}{" "}
+              {selectedVibe.aheadBy === 1 ? "commit" : "commits"} ahead
             </span>
             <div className="flex gap-2">
               <button
@@ -447,6 +714,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         </div>
       )}
 
+      {/* Input */}
       <div className="border-t border-gray-200 p-4 safe-area-bottom">
         <div className="flex gap-2">
           <textarea

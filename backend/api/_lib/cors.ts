@@ -1,5 +1,17 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+function logRequest(req: VercelRequest, res: VercelResponse) {
+  const start = Date.now();
+  const method = req.method;
+  const url = req.url;
+  console.log(`<-- ${method} ${url}`);
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(`--> ${method} ${url} ${res.statusCode} ${duration}ms`);
+  });
+}
+
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "https://player.scrns.io",
@@ -10,6 +22,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 export function cors(req: VercelRequest, res: VercelResponse): boolean {
+  logRequest(req, res);
   const origin = req.headers.origin;
 
   // Check if origin is allowed

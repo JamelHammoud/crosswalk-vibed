@@ -6,10 +6,25 @@ import { cors } from "../_lib/cors.js";
 import { broadcastNewDrop } from "../_lib/pusher.js";
 
 type DropRangeType = "close" | "far" | "anywhere";
-type EffectType = "none" | "confetti" | "rainbow" | "stars" | "spooky" | "gross" | "uhoh";
+type EffectType =
+  | "none"
+  | "confetti"
+  | "rainbow"
+  | "stars"
+  | "spooky"
+  | "gross"
+  | "uhoh";
 
 const VALID_RANGES: DropRangeType[] = ["close", "far", "anywhere"];
-const VALID_EFFECTS: EffectType[] = ["none", "confetti", "rainbow", "stars", "spooky", "gross", "uhoh"];
+const VALID_EFFECTS: EffectType[] = [
+  "none",
+  "confetti",
+  "rainbow",
+  "stars",
+  "spooky",
+  "gross",
+  "uhoh",
+];
 
 const notExpiredFilter = sql`(${schema.drops.expiresAt} IS NULL OR ${schema.drops.expiresAt} > datetime('now'))`;
 
@@ -73,8 +88,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from(schema.drops)
       .leftJoin(schema.users, eq(schema.drops.userId, schema.users.id))
       .where(
-        sql`${schema.drops.latitude} BETWEEN ${lat - latDelta} AND ${lat + latDelta}
-            AND ${schema.drops.longitude} BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}
+        sql`${schema.drops.latitude} BETWEEN ${lat - latDelta} AND ${
+          lat + latDelta
+        }
+            AND ${schema.drops.longitude} BETWEEN ${lng - lngDelta} AND ${
+          lng + lngDelta
+        }
             AND ${notExpiredFilter}`
       )
       .orderBy(sql`${schema.drops.createdAt} DESC`)

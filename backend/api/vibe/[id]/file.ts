@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { eq } from "drizzle-orm";
-import { db, schema } from "../_lib/db.js";
-import { verifyAuth } from "../_lib/auth.js";
-import { cors } from "../_lib/cors.js";
-import * as github from "../_lib/github.js";
+import { eq, and, isNull } from "drizzle-orm";
+import { db, schema } from "../../_lib/db.js";
+import { verifyAuth } from "../../_lib/auth.js";
+import { cors } from "../../_lib/cors.js";
+import * as github from "../../_lib/github.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (cors(req, res)) return;
@@ -18,6 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { userId } = auth;
+  const vibeId = req.query.id as string;
   const path = req.query.path as string;
 
   if (!path) {
@@ -25,12 +26,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const branch = await db.query.vibeBranches.findFirst({
-      where: eq(schema.vibeBranches.userId, userId),
-    });
+    const vibeData = await db
+      .select()
+      .from(schema.vibes)
+      .where(
+        and(
+          eq(schema.vibes.id, vibeId),
+          eq(schema.vibes.userId, userId),
+          isNull(schema.vibes.deletedAt)
+        )
+      )
+      .get();
 
-    const branchName = branch?.branchName || "main";
-    const file = await github.getFile(path, branchName);
+    if (!vibeData) {
+      return res.status(404).json({ error: "Vibe not found" });
+    }
+
+    const file = await github.getFile(path, vibeData.branchName);
 
     if (!file) {
       return res.status(404).json({ error: "File not found" });

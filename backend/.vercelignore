@@ -1,8 +1,0 @@
-# Ignore source files - we use bundled api/index.js
-src/
-dist/
-drizzle/
-data/
-*.md
-tsconfig.json
-drizzle.config.ts

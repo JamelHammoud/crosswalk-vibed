@@ -2,11 +2,11 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import type { ServerWebSocket } from "bun";
-import auth from "./routes/auth";
-import drops from "./routes/drops";
-import notifications from "./routes/notifications";
-import vibe from "./routes/vibe";
-import { addClient, removeClient } from "./ws";
+import auth from "../src/routes/auth";
+import drops from "../src/routes/drops";
+import notifications from "../src/routes/notifications";
+import vibe from "../src/routes/vibe";
+import { addClient, removeClient } from "../src/ws";
 
 const app = new Hono();
 

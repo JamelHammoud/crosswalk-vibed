@@ -6,6 +6,7 @@
       "source": "/notifications/:path*",
       "destination": "/api/notifications/:path*"
     },
+    { "source": "/vibe/:path*", "destination": "/api/vibe/:path*" },
     { "source": "/", "destination": "/api" }
   ]
 }

@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run --watch local/server.ts",
     "start": "bun run local/server.ts",
-    "build": "true",
+    "build": "npx esbuild src/index.ts --bundle --platform=node --format=esm --outfile=src/index.js --external:@libsql/client",
     "build:vercel": "npx esbuild api/index.ts --bundle --platform=node --format=esm --outfile=api/index.js --external:@libsql/client",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",

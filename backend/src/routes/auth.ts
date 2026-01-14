@@ -15,17 +15,23 @@ type Variables = {
 const auth = new Hono<{ Variables: Variables }>();
 
 auth.post("/apple", async (c) => {
+  console.log("[auth/apple] Request received");
   const { identityToken } = await c.req.json<{
     identityToken: string;
     authorizationCode: string;
   }>();
+  console.log("[auth/apple] Body parsed");
 
   try {
+    console.log("[auth/apple] Verifying Apple token...");
     const appleUser = await verifyAppleToken(identityToken);
+    console.log("[auth/apple] Apple token verified:", appleUser.sub);
 
+    console.log("[auth/apple] Querying database...");
     let user = await db.query.users.findFirst({
       where: eq(schema.users.appleUserId, appleUser.sub),
     });
+    console.log("[auth/apple] Database query complete, user:", user?.id);
 
     if (!user) {
       const id = crypto.randomUUID();

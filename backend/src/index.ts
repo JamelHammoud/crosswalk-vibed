@@ -1,5 +1,5 @@
-import { handle } from "@hono/node-server/vercel";
 import { Hono } from "hono";
+import { handle } from "hono/vercel";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import auth from "./routes/auth";

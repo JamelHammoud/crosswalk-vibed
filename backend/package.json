@@ -1,7 +1,6 @@
 {
   "name": "crosswalk-backend",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "bun run --watch local/server.ts",
     "start": "bun run local/server.ts",

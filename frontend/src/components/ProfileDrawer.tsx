@@ -21,6 +21,7 @@ export function ProfileDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVibeChatOpen, setIsVibeChatOpen] = useState(false);
+  const [showHello, setShowHello] = useState(false);
 
   if (!isOpen && !isVibeChatOpen) return null;
 
@@ -58,6 +59,11 @@ export function ProfileDrawer({
     onSignOut();
   };
 
+  const handleSmileClick = () => {
+    setShowHello(true);
+    setTimeout(() => setShowHello(false), 2000); // Hide after 2 seconds
+  };
+
   return (
     <>
       <div
@@ -89,6 +95,26 @@ export function ProfileDrawer({
                     title={color.name}
                   />
                 ))}
+              </div>
+            </div>
+
+            {/* Smile Button Section */}
+            <div>
+              <label className="text-gray-500 text-sm mb-2 block">
+                Have a great day!
+              </label>
+              <div className="relative">
+                <button
+                  onClick={handleSmileClick}
+                  className="w-16 h-16 bg-yellow-100 hover:bg-yellow-200 rounded-full flex items-center justify-center text-4xl transition-all duration-200 hover:scale-110 active:scale-95"
+                >
+                  😊
+                </button>
+                {showHello && (
+                  <div className="absolute top-0 left-20 bg-primary text-ink px-3 py-2 rounded-lg shadow-lg animate-[fadeInOut_2s_ease-in-out]">
+                    Hello!
+                  </div>
+                )}
               </div>
             </div>
 
@@ -203,6 +229,12 @@ export function ProfileDrawer({
               @keyframes twinkle {
                 0%, 100% { opacity: 0.3; transform: scale(1); }
                 50% { opacity: 1; transform: scale(1.2); }
+              }
+              @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(10px); }
+                15% { opacity: 1; transform: translateY(0); }
+                85% { opacity: 1; transform: translateY(0); }
+                100% { opacity: 0; transform: translateY(-10px); }
               }
             `}</style>
 

@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { eq, sql } from "drizzle-orm";
-import { db, schema } from "../_lib/db";
-import { verifyAuth } from "../_lib/auth";
-import { cors } from "../_lib/cors";
+import { db, schema } from "../_lib/db.js";
+import { verifyAuth } from "../_lib/auth.js";
+import { cors } from "../_lib/cors.js";
 
 type DropRangeType = "close" | "far" | "anywhere";
 type EffectType = "none" | "confetti" | "rainbow" | "stars" | "spooky" | "gross" | "uhoh";

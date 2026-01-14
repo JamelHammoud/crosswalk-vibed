@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { eq } from "drizzle-orm";
-import { db, schema } from "../_lib/db";
-import { createToken, verifyAppleToken } from "../_lib/auth";
-import { cors } from "../_lib/cors";
-import { generateUsername } from "../_lib/username";
+import { db, schema } from "../_lib/db.js";
+import { createToken, verifyAppleToken } from "../_lib/auth.js";
+import { cors } from "../_lib/cors.js";
+import { generateUsername } from "../_lib/username.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (cors(req, res)) return;

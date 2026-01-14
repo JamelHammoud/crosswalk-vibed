@@ -1,6 +1,6 @@
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
-const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+const VERCEL_VIBE_PROJECT_ID = process.env.VERCEL_VIBE_PROJECT_ID; // Frontend project for vibe previews
 
 interface VercelDeployment {
   uid: string;
@@ -28,14 +28,14 @@ export interface DeploymentStatus {
 export async function getDeploymentStatus(
   branchName: string
 ): Promise<DeploymentStatus> {
-  if (!VERCEL_TOKEN || !VERCEL_PROJECT_ID) {
+  if (!VERCEL_TOKEN || !VERCEL_VIBE_PROJECT_ID) {
     return { state: "NOT_FOUND" };
   }
 
   try {
     const params = new URLSearchParams({
       limit: "20",
-      projectId: VERCEL_PROJECT_ID,
+      projectId: VERCEL_VIBE_PROJECT_ID,
     });
 
     if (VERCEL_TEAM_ID) {
@@ -93,15 +93,15 @@ export async function getDeploymentForBranch(
     return null;
   }
 
-  if (!VERCEL_PROJECT_ID) {
-    console.error("VERCEL_PROJECT_ID not set");
+  if (!VERCEL_VIBE_PROJECT_ID) {
+    console.error("VERCEL_VIBE_PROJECT_ID not set");
     return null;
   }
 
   try {
     const params = new URLSearchParams({
       limit: "100",
-      projectId: VERCEL_PROJECT_ID,
+      projectId: VERCEL_VIBE_PROJECT_ID,
     });
 
     // Team ID is required for team-owned projects

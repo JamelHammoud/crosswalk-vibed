@@ -35,6 +35,8 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   });
   const [showChangedFiles, setShowChangedFiles] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -202,43 +204,39 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleViewPreview = async () => {
+    setIsLoadingPreview(true);
     try {
       const result = await api.vibe.getPreviewUrl();
-      const { previewUrl, source, message } = result as any;
-      console.log("Preview URL:", previewUrl, "source:", source);
+      const { previewUrl: url, source, message } = result as any;
+      console.log("Preview URL:", url, "source:", source);
 
-      // Try window.open first
-      const opened = window.open(previewUrl, "_blank");
-
-      // If popup was blocked, try anchor click
-      if (!opened) {
-        const link = document.createElement("a");
-        link.href = previewUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      if (source === "vercel-api") {
+        // Show preview in iframe
+        setPreviewUrl(url);
+      } else {
+        // Fallback: show message in chat
+        const urlMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `🔗 **Preview not ready yet**\n\n${
+            message || "Push a commit to trigger a Vercel preview."
+          }\n\n[View branch on GitHub](${url})`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, urlMessage]);
       }
-
-      // Show URL in chat
-      const isVercel = source === "vercel-api";
-      const urlMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: isVercel
-          ? `🚀 **Your Vercel Preview:**\n\n[${previewUrl}](${previewUrl})\n\nTap to view your changes live!`
-          : `🔗 **Preview not ready yet**\n\n${
-              message || "Push a commit to trigger a Vercel preview."
-            }\n\n[View branch on GitHub](${previewUrl})`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, urlMessage]);
     } catch (err) {
       console.error("Failed to get preview URL:", err);
-      alert(
-        "Could not get preview URL. Make sure your repo is connected to Vercel."
-      );
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "Could not get preview URL. Make sure your repo is connected to Vercel and env vars are set.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoadingPreview(false);
     }
   };
 
@@ -427,9 +425,10 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
               </button>
               <button
                 onClick={handleViewPreview}
-                className="px-3 py-1.5 bg-white/20 text-white text-sm font-medium rounded-lg"
+                disabled={isLoadingPreview}
+                className="px-3 py-1.5 bg-white/20 text-white text-sm font-medium rounded-lg disabled:opacity-50"
               >
-                👀 View
+                {isLoadingPreview ? "Loading..." : "👀 View"}
               </button>
               <button
                 onClick={handleOpenPR}
@@ -473,6 +472,32 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
           </button>
         </div>
       </div>
+
+      {/* Preview iframe overlay */}
+      {previewUrl && (
+        <div className="absolute inset-0 z-50 bg-white flex flex-col">
+          <div className="flex items-center justify-center gap-3 px-4 py-2 bg-amber-400">
+            <span className="text-ink font-bold text-sm">
+              ✨ Previewing Vibe
+            </span>
+            <button
+              onClick={() => setPreviewUrl(null)}
+              className="px-3 py-1 bg-ink text-white text-xs font-bold rounded-full"
+            >
+              Exit Preview
+            </button>
+          </div>
+          <iframe
+            src={`${previewUrl}${
+              previewUrl.includes("?") ? "&" : "?"
+            }vibe_token=${encodeURIComponent(
+              localStorage.getItem("auth_token") || ""
+            )}`}
+            className="flex-1 w-full border-0"
+            title="Preview"
+          />
+        </div>
+      )}
     </div>
   );
 }

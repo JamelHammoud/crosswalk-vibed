@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import Anthropic from "@anthropic-ai/sdk";
 import * as github from "../services/github";
+import { getDeploymentForBranch } from "../../api/_lib/vercel";
 
 type Variables = {
   userId: string;
@@ -434,6 +435,10 @@ vibe.delete("/history", async (c) => {
 vibe.get("/preview-url", async (c) => {
   const userId = c.get("userId");
 
+  console.log("=== preview-url called ===");
+  console.log("VERCEL_TOKEN set:", !!process.env.VERCEL_TOKEN);
+  console.log("VERCEL_PROJECT_ID set:", !!process.env.VERCEL_PROJECT_ID);
+
   const branch = await db
     .select()
     .from(vibeBranches)
@@ -444,11 +449,33 @@ vibe.get("/preview-url", async (c) => {
     return c.json({ error: "No branch found" }, 404);
   }
 
-  const previewUrlBase = process.env.PREVIEW_URL_BASE || "https://crswlk";
-  const branchSlug = branch.branchName.replace(/\//g, "-");
-  const previewUrl = `${previewUrlBase}-git-${branchSlug}.vercel.app`;
+  console.log("Looking for branch:", branch.branchName);
 
-  return c.json({ previewUrl, branch: branch.branchName });
+  // Try to get actual deployment URL from Vercel API
+  const deploymentUrl = await getDeploymentForBranch(branch.branchName);
+  console.log("Deployment URL result:", deploymentUrl);
+
+  if (deploymentUrl) {
+    return c.json({
+      previewUrl: deploymentUrl,
+      branch: branch.branchName,
+      source: "vercel-api",
+    });
+  }
+
+  // Fallback to GitHub branch URL
+  const repoOwner = process.env.GITHUB_REPO_OWNER || "jamelhammoud";
+  const repoName = process.env.GITHUB_REPO_NAME || "crosswalk-vibed";
+  const githubUrl = `https://github.com/${repoOwner}/${repoName}/tree/${encodeURIComponent(
+    branch.branchName
+  )}`;
+
+  return c.json({
+    previewUrl: githubUrl,
+    branch: branch.branchName,
+    source: "github-fallback",
+    message: "No Vercel deployment found. Push a commit to trigger a preview.",
+  });
 });
 
 export default vibe;

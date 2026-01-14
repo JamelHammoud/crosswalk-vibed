@@ -6,8 +6,15 @@ interface VercelDeployment {
   uid: string;
   url: string;
   state: string;
-  meta?: {
-    githubCommitRef?: string;
+  name: string;
+  source?: string;
+  target?: string;
+  meta?: Record<string, string>;
+  gitSource?: {
+    ref?: string;
+    repoId?: string;
+    sha?: string;
+    type?: string;
   };
   createdAt: number;
 }
@@ -20,19 +27,22 @@ export async function getDeploymentForBranch(
     return null;
   }
 
+  if (!VERCEL_PROJECT_ID) {
+    console.error("VERCEL_PROJECT_ID not set");
+    return null;
+  }
+
   try {
-    // Build query params
     const params = new URLSearchParams({
-      limit: "50",
-      state: "READY",
+      limit: "100",
+      projectId: VERCEL_PROJECT_ID,
     });
 
-    if (VERCEL_PROJECT_ID) {
-      params.set("projectId", VERCEL_PROJECT_ID);
-    }
-
+    // Team ID is required for team-owned projects
     if (VERCEL_TEAM_ID) {
       params.set("teamId", VERCEL_TEAM_ID);
+    } else {
+      console.warn("VERCEL_TEAM_ID not set - may get 403 for team projects");
     }
 
     const response = await fetch(
@@ -45,26 +55,64 @@ export async function getDeploymentForBranch(
     );
 
     if (!response.ok) {
-      console.error(
-        "Vercel API error:",
-        response.status,
-        await response.text()
-      );
+      const errorText = await response.text();
+      console.error("Vercel API error:", response.status, errorText);
       return null;
     }
 
     const data = await response.json();
     const deployments: VercelDeployment[] = data.deployments || [];
 
-    // Find the most recent deployment for this branch
-    const deployment = deployments.find(
-      (d) => d.meta?.githubCommitRef === branchName && d.state === "READY"
-    );
+    console.log(`Looking for branch: "${branchName}"`);
+    console.log(`Total deployments: ${deployments.length}`);
+
+    // Find READY deployment matching our branch
+    const deployment = deployments.find((d) => {
+      if (d.state !== "READY") return false;
+
+      // Check multiple possible locations for branch name
+      const possibleBranches = [
+        d.meta?.githubCommitRef,
+        d.meta?.gitlabCommitRef,
+        d.meta?.bitbucketCommitRef,
+        d.source,
+        d.gitSource?.ref,
+      ].filter(Boolean);
+
+      // Also check all meta values
+      if (d.meta) {
+        Object.values(d.meta).forEach((v) => {
+          if (typeof v === "string") possibleBranches.push(v);
+        });
+      }
+
+      const matches = possibleBranches.some(
+        (b) => b === branchName || b?.toLowerCase() === branchName.toLowerCase()
+      );
+
+      if (matches) {
+        console.log(`✓ Found matching deployment: ${d.url}`);
+        return true;
+      }
+
+      return false;
+    });
 
     if (deployment) {
       return `https://${deployment.url}`;
     }
 
+    // Log what we found for debugging
+    const readyDeployments = deployments.filter((d) => d.state === "READY");
+    console.log(`Ready deployments: ${readyDeployments.length}`);
+    readyDeployments.slice(0, 3).forEach((d, i) => {
+      console.log(`[${i}] ${d.url}`);
+      console.log(`    source: ${d.source}`);
+      console.log(`    gitSource.ref: ${d.gitSource?.ref}`);
+      console.log(`    meta.githubCommitRef: ${d.meta?.githubCommitRef}`);
+    });
+
+    console.log("No matching deployment found");
     return null;
   } catch (err) {
     console.error("Failed to fetch Vercel deployments:", err);

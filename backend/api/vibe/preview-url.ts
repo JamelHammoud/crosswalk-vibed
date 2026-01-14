@@ -6,6 +6,8 @@ import { cors } from "../_lib/cors.js";
 import { getDeploymentForBranch } from "../_lib/vercel.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log("=== preview-url handler called ===");
+
   if (cors(req, res)) return;
 
   if (req.method !== "GET") {
@@ -18,18 +20,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { userId } = auth;
+  console.log("User ID:", userId);
+
+  // Log env vars (just existence, not values)
+  console.log("VERCEL_TOKEN set:", !!process.env.VERCEL_TOKEN);
+  console.log("VERCEL_PROJECT_ID set:", !!process.env.VERCEL_PROJECT_ID);
+  console.log("VERCEL_TEAM_ID set:", !!process.env.VERCEL_TEAM_ID);
 
   try {
     const branch = await db.query.vibeBranches.findFirst({
       where: eq(schema.vibeBranches.userId, userId),
     });
 
+    console.log("Branch found:", branch?.branchName || "none");
+
     if (!branch) {
       return res.status(404).json({ error: "No branch found" });
     }
 
     // Try to get actual deployment URL from Vercel API
+    console.log("Calling getDeploymentForBranch...");
     const deploymentUrl = await getDeploymentForBranch(branch.branchName);
+    console.log("Deployment URL result:", deploymentUrl);
 
     if (deploymentUrl) {
       return res.json({
@@ -46,6 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       branch.branchName
     )}`;
 
+    console.log("Falling back to GitHub URL");
     return res.json({
       previewUrl: githubUrl,
       branch: branch.branchName,

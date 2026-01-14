@@ -158,21 +158,53 @@ export function ProfileDrawer({
 
             <button
               onClick={() => setIsVibeChatOpen(true)}
-              className="w-full h-14 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white font-bold rounded-xl flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transition-shadow"
+              className="group relative w-full h-16 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
             >
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
-                <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2" />
-                <path d="M19 11h2m-1 -1v2" />
-              </svg>
-              Open Vibe²
+              {/* Night sky gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]" />
+
+              {/* Stars layer */}
+              <div className="absolute inset-0 overflow-hidden">
+                {/* Static stars */}
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[10%] opacity-60" />
+                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[25%] left-[25%] opacity-40" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[20%] left-[45%] opacity-70" />
+                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[35%] left-[60%] opacity-50" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[75%] opacity-60" />
+                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[40%] left-[85%] opacity-40" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[15%] opacity-50" />
+                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[70%] left-[35%] opacity-60" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[65%] left-[55%] opacity-40" />
+                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[75%] left-[70%] opacity-70" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[55%] left-[90%] opacity-50" />
+
+                {/* Twinkling stars with animation */}
+                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[20%] left-[20%] animate-[twinkle_2s_ease-in-out_infinite]" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[30%] left-[50%] animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
+                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[25%] left-[80%] animate-[twinkle_3s_ease-in-out_infinite_1s]" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[30%] animate-[twinkle_2.2s_ease-in-out_infinite_0.3s]" />
+                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[70%] left-[65%] animate-[twinkle_2.8s_ease-in-out_infinite_0.7s]" />
+                <div className="absolute w-1 h-1 bg-white rounded-full top-[45%] left-[5%] animate-[twinkle_2.4s_ease-in-out_infinite_1.2s]" />
+                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[50%] left-[95%] animate-[twinkle_3.2s_ease-in-out_infinite_0.9s]" />
+              </div>
+
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+              {/* Button text */}
+              <div className="relative z-10 flex items-center justify-center h-full">
+                <span className="text-white font-bold text-lg tracking-wide drop-shadow-lg">
+                  Open Vibe²
+                </span>
+              </div>
             </button>
+
+            <style>{`
+              @keyframes twinkle {
+                0%, 100% { opacity: 0.3; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.2); }
+              }
+            `}</style>
 
             <button
               onClick={handleSignOut}

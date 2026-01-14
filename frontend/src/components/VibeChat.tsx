@@ -203,8 +203,37 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
 
   const handleViewPreview = async () => {
     try {
-      const { previewUrl } = await api.vibe.getPreviewUrl();
-      window.open(previewUrl, "_blank");
+      const result = await api.vibe.getPreviewUrl();
+      const { previewUrl, source, message } = result as any;
+      console.log("Preview URL:", previewUrl, "source:", source);
+
+      // Try window.open first
+      const opened = window.open(previewUrl, "_blank");
+
+      // If popup was blocked, try anchor click
+      if (!opened) {
+        const link = document.createElement("a");
+        link.href = previewUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // Show URL in chat
+      const isVercel = source === "vercel-api";
+      const urlMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: isVercel
+          ? `🚀 **Your Vercel Preview:**\n\n[${previewUrl}](${previewUrl})\n\nTap to view your changes live!`
+          : `🔗 **Preview not ready yet**\n\n${
+              message || "Push a commit to trigger a Vercel preview."
+            }\n\n[View branch on GitHub](${previewUrl})`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, urlMessage]);
     } catch (err) {
       console.error("Failed to get preview URL:", err);
       alert(
@@ -217,13 +246,29 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <div className="relative flex items-center justify-between px-4 py-3 overflow-hidden">
+        {/* Night sky header background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0c29] via-[#302b63] to-[#24243e]" />
+
+        {/* Stars in header */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[20%] left-[5%] opacity-60" />
+          <div className="absolute w-1 h-1 bg-white rounded-full top-[30%] left-[15%] animate-[twinkle_2s_ease-in-out_infinite]" />
+          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[60%] left-[25%] opacity-40" />
+          <div className="absolute w-1 h-1 bg-white rounded-full top-[40%] left-[35%] animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
+          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[25%] left-[55%] opacity-50" />
+          <div className="absolute w-1 h-1 bg-white rounded-full top-[70%] left-[65%] animate-[twinkle_3s_ease-in-out_infinite_1s]" />
+          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[35%] left-[75%] opacity-70" />
+          <div className="absolute w-1 h-1 bg-white rounded-full top-[55%] left-[85%] animate-[twinkle_2.2s_ease-in-out_infinite_0.3s]" />
+          <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[45%] left-[95%] opacity-40" />
+        </div>
+
         <button
           onClick={onClose}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
         >
           <svg
-            className="w-6 h-6 text-ink"
+            className="w-6 h-6 text-white"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -232,19 +277,16 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <div className="text-center flex-1">
-          <h1 className="text-lg font-bold text-ink">Vibe²</h1>
+        <div className="relative z-10 text-center flex-1">
+          <h1 className="text-lg font-bold text-white drop-shadow-lg">Vibe²</h1>
           {branchStatus.branch && (
             <button
               onClick={() => setShowChangedFiles(!showChangedFiles)}
-              className="text-xs text-gray-500 flex items-center justify-center gap-1 mx-auto"
+              className="text-xs text-white/70 flex items-center justify-center gap-1 mx-auto hover:text-white transition-colors"
             >
               <span className="font-mono">{branchStatus.branch}</span>
               {branchStatus.hasChanges && (
-                <span
-                  className="px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold"
-                  style={{ backgroundColor: themeColor }}
-                >
+                <span className="px-1.5 py-0.5 rounded-full text-white text-[10px] font-bold bg-white/20">
                   {branchStatus.aheadBy} changes
                 </span>
               )}
@@ -253,10 +295,10 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         </div>
         <button
           onClick={handleClearHistory}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="relative z-10 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
         >
           <svg
-            className="w-5 h-5 text-gray-400"
+            className="w-5 h-5 text-white/60"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -265,6 +307,13 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
+
+        <style>{`
+          @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+          }
+        `}</style>
       </div>
 
       {showChangedFiles && branchStatus.changedFiles.length > 0 && (

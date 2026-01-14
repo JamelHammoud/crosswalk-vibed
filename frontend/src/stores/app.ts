@@ -2,10 +2,15 @@ import { create } from "zustand";
 import type { Drop, Location, User, Notification } from "../types";
 import {
   ThemeColor,
+  ThemeMode,
   DEFAULT_THEME_COLOR,
+  DEFAULT_THEME_MODE,
   getStoredThemeColor,
+  getStoredThemeMode,
   setStoredThemeColor,
+  setStoredThemeMode,
   applyThemeColor,
+  applyThemeMode,
 } from "../constants/theme";
 
 type TabType = "map" | "activity";
@@ -21,6 +26,7 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   themeColor: ThemeColor;
+  themeMode: ThemeMode;
   activeTab: TabType;
   notifications: Notification[];
   unreadCount: number;
@@ -41,6 +47,7 @@ interface AppState {
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   setThemeColor: (color: ThemeColor) => void;
+  setThemeMode: (mode: ThemeMode) => void;
   setActiveTab: (tab: TabType) => void;
   setNotifications: (notifications: Notification[]) => void;
   addNotification: (notification: Notification) => void;
@@ -52,7 +59,9 @@ interface AppState {
 }
 
 const initialThemeColor = getStoredThemeColor();
+const initialThemeMode = getStoredThemeMode();
 applyThemeColor(initialThemeColor);
+applyThemeMode(initialThemeMode);
 
 export const useAppStore = create<AppState>((set) => ({
   user: null,
@@ -65,6 +74,7 @@ export const useAppStore = create<AppState>((set) => ({
   isLoading: false,
   error: null,
   themeColor: initialThemeColor,
+  themeMode: initialThemeMode,
   activeTab: "map",
   notifications: [],
   unreadCount: 0,
@@ -108,6 +118,10 @@ export const useAppStore = create<AppState>((set) => ({
     setStoredThemeColor(color);
     set({ themeColor: color });
   },
+  setThemeMode: (mode) => {
+    setStoredThemeMode(mode);
+    set({ themeMode: mode });
+  },
   setActiveTab: (tab) => set({ activeTab: tab }),
   setNotifications: (notifications) => set({ notifications }),
   addNotification: (notification) =>
@@ -137,6 +151,7 @@ export const useAppStore = create<AppState>((set) => ({
       isLoading: false,
       error: null,
       themeColor: DEFAULT_THEME_COLOR,
+      themeMode: DEFAULT_THEME_MODE,
       activeTab: "map",
       notifications: [],
       unreadCount: 0,

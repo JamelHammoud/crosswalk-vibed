@@ -17,7 +17,11 @@ export function cors(req: VercelRequest, res: VercelResponse): boolean {
   if (origin) {
     if (ALLOWED_ORIGINS.includes(origin)) {
       allowedOrigin = origin;
-    } else if (origin.includes("crswlk") && origin.includes("vercel.app")) {
+    } else if (
+      origin.includes("vercel.app") &&
+      (origin.includes("crswlk") || origin.includes("crosswalk"))
+    ) {
+      // Allow all Vercel preview deployments for crswlk or crosswalk projects
       allowedOrigin = origin;
     }
   }

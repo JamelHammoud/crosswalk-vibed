@@ -509,6 +509,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             )}`}
             className="flex-1 w-full border-0"
             title="Preview"
+            allow="geolocation; camera; microphone"
           />
         </div>
       )}

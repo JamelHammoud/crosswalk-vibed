@@ -4,6 +4,20 @@ import { api } from "../services/api";
 import { THEME_COLORS } from "../constants/theme";
 import { VibeChat } from "./VibeChat";
 
+// Check if we're on a Vercel preview deployment (not production)
+const isPreviewDeployment = () => {
+  const hostname = window.location.hostname;
+  // Preview URLs have a hash like: crosswalk-vibed-frontend-abc123-team.vercel.app
+  // Production is: crosswalk-vibed-frontend.vercel.app or player.scrns.io
+  if (hostname.includes("vercel.app")) {
+    // If it has -git- or a hash pattern, it's a preview
+    return (
+      hostname.includes("-git-") || /frontend-[a-z0-9]{6,}-/.test(hostname)
+    );
+  }
+  return false;
+};
+
 interface ProfileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +35,7 @@ export function ProfileDrawer({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVibeChatOpen, setIsVibeChatOpen] = useState(false);
+  const showVibeFeature = !isPreviewDeployment();
 
   if (!isOpen && !isVibeChatOpen) return null;
 
@@ -156,55 +171,59 @@ export function ProfileDrawer({
               <p className="text-ink">{user?.email || "Private"}</p>
             </div>
 
-            <button
-              onClick={() => setIsVibeChatOpen(true)}
-              className="group relative w-full h-16 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
-            >
-              {/* Night sky gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]" />
+            {showVibeFeature && (
+              <>
+                <button
+                  onClick={() => setIsVibeChatOpen(true)}
+                  className="group relative w-full h-16 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
+                >
+                  {/* Night sky gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e]" />
 
-              {/* Stars layer */}
-              <div className="absolute inset-0 overflow-hidden">
-                {/* Static stars */}
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[10%] opacity-60" />
-                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[25%] left-[25%] opacity-40" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[20%] left-[45%] opacity-70" />
-                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[35%] left-[60%] opacity-50" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[75%] opacity-60" />
-                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[40%] left-[85%] opacity-40" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[15%] opacity-50" />
-                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[70%] left-[35%] opacity-60" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[65%] left-[55%] opacity-40" />
-                <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[75%] left-[70%] opacity-70" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[55%] left-[90%] opacity-50" />
+                  {/* Stars layer */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    {/* Static stars */}
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[10%] opacity-60" />
+                    <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[25%] left-[25%] opacity-40" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[20%] left-[45%] opacity-70" />
+                    <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[35%] left-[60%] opacity-50" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[15%] left-[75%] opacity-60" />
+                    <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[40%] left-[85%] opacity-40" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[15%] opacity-50" />
+                    <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[70%] left-[35%] opacity-60" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[65%] left-[55%] opacity-40" />
+                    <div className="absolute w-0.5 h-0.5 bg-white rounded-full top-[75%] left-[70%] opacity-70" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[55%] left-[90%] opacity-50" />
 
-                {/* Twinkling stars with animation */}
-                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[20%] left-[20%] animate-[twinkle_2s_ease-in-out_infinite]" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[30%] left-[50%] animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
-                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[25%] left-[80%] animate-[twinkle_3s_ease-in-out_infinite_1s]" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[30%] animate-[twinkle_2.2s_ease-in-out_infinite_0.3s]" />
-                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[70%] left-[65%] animate-[twinkle_2.8s_ease-in-out_infinite_0.7s]" />
-                <div className="absolute w-1 h-1 bg-white rounded-full top-[45%] left-[5%] animate-[twinkle_2.4s_ease-in-out_infinite_1.2s]" />
-                <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[50%] left-[95%] animate-[twinkle_3.2s_ease-in-out_infinite_0.9s]" />
-              </div>
+                    {/* Twinkling stars with animation */}
+                    <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[20%] left-[20%] animate-[twinkle_2s_ease-in-out_infinite]" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[30%] left-[50%] animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
+                    <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[25%] left-[80%] animate-[twinkle_3s_ease-in-out_infinite_1s]" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[60%] left-[30%] animate-[twinkle_2.2s_ease-in-out_infinite_0.3s]" />
+                    <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[70%] left-[65%] animate-[twinkle_2.8s_ease-in-out_infinite_0.7s]" />
+                    <div className="absolute w-1 h-1 bg-white rounded-full top-[45%] left-[5%] animate-[twinkle_2.4s_ease-in-out_infinite_1.2s]" />
+                    <div className="absolute w-1.5 h-1.5 bg-white rounded-full top-[50%] left-[95%] animate-[twinkle_3.2s_ease-in-out_infinite_0.9s]" />
+                  </div>
 
-              {/* Subtle glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-              {/* Button text */}
-              <div className="relative z-10 flex items-center justify-center h-full">
-                <span className="text-white font-bold text-lg tracking-wide drop-shadow-lg">
-                  Open Vibe²
-                </span>
-              </div>
-            </button>
+                  {/* Button text */}
+                  <div className="relative z-10 flex items-center justify-center h-full">
+                    <span className="text-white font-bold text-lg tracking-wide drop-shadow-lg">
+                      Open Vibe²
+                    </span>
+                  </div>
+                </button>
 
-            <style>{`
-              @keyframes twinkle {
-                0%, 100% { opacity: 0.3; transform: scale(1); }
-                50% { opacity: 1; transform: scale(1.2); }
-              }
-            `}</style>
+                <style>{`
+                  @keyframes twinkle {
+                    0%, 100% { opacity: 0.3; transform: scale(1); }
+                    50% { opacity: 1; transform: scale(1.2); }
+                  }
+                `}</style>
+              </>
+            )}
 
             <button
               onClick={handleSignOut}

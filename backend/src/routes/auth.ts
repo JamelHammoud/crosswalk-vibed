@@ -16,11 +16,20 @@ const auth = new Hono<{ Variables: Variables }>();
 
 auth.post("/apple", async (c) => {
   console.log("[auth/apple] Request received");
-  const { identityToken } = await c.req.json<{
-    identityToken: string;
-    authorizationCode: string;
-  }>();
-  console.log("[auth/apple] Body parsed");
+  console.log("[auth/apple] Content-Type:", c.req.header("content-type"));
+  
+  let body: { identityToken: string; authorizationCode: string };
+  try {
+    const text = await c.req.text();
+    console.log("[auth/apple] Raw body length:", text.length);
+    body = JSON.parse(text);
+  } catch (e) {
+    console.error("[auth/apple] Body parse error:", e);
+    return c.json({ message: "Invalid request body" }, 400);
+  }
+  
+  const { identityToken } = body;
+  console.log("[auth/apple] Body parsed, token length:", identityToken?.length);
 
   try {
     console.log("[auth/apple] Verifying Apple token...");

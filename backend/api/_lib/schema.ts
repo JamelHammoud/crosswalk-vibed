@@ -65,4 +65,5 @@ export const vibeMessages = sqliteTable("vibe_messages", {
   role: text("role").notNull(),
   content: text("content").notNull(),
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
+  deletedAt: text("deleted_at"),
 });

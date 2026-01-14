@@ -65,6 +65,7 @@ export const vibeMessages = sqliteTable("vibe_messages", {
   role: text("role").notNull(), // 'user' or 'assistant'
   content: text("content").notNull(),
   createdAt: text("created_at").notNull().default(new Date().toISOString()),
+  deletedAt: text("deleted_at"), // soft delete - set when chat is cleared
 });
 
 export type User = typeof users.$inferSelect;

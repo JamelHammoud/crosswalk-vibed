@@ -51,7 +51,7 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             role: "assistant",
             content: `Hey ${
               user?.name || "there"
-            }! 👋 I'm your AI coding buddy with **real superpowers**.\n\nI can actually read and write code in the Crosswalk repo! Tell me what you want to build or change, and I'll make it happen.\n\n🔧 Your changes go to your personal branch on GitHub\n👀 Click "View My Version" to see your changes live\n📝 When ready, I can open a PR to share with everyone\n↩️ You can always revert to production\n\nWhat shall we build?`,
+            }!\n\nWelcome to **Vibe²**, where you can dream up new experiences for this app.\n\nSimply ask me to add things, change things, etc., and I'll let you know when I'm done. Then you can use your new version of Crosswalk.\n\nWant to let others use it? Open a PR to the repo.`,
             timestamp: new Date(),
           },
         ]);
@@ -158,7 +158,11 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
   };
 
   const handleRevert = async () => {
-    if (!confirm("This will reset your branch to production. Continue?")) {
+    if (
+      !confirm(
+        "This will reset your branch to production and clear chat history. Continue?"
+      )
+    ) {
       return;
     }
 
@@ -171,14 +175,15 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
         changedFiles: [],
         aheadBy: 0,
       }));
-      const revertMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content:
-          "↩️ **Reverted to production!** Your branch is now in sync with main. Ready to start fresh!",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, revertMessage]);
+      // Clear all messages and show fresh welcome
+      setMessages([
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: `↩️ **Reverted to production!**\n\nYour branch and chat history have been cleared. Ready to start completely fresh!\n\nWhat would you like to build?`,
+          timestamp: new Date(),
+        },
+      ]);
     } catch (err: any) {
       alert(`Failed to revert: ${err.message}`);
     } finally {
@@ -480,6 +485,15 @@ export function VibeChat({ isOpen, onClose }: VibeChatProps) {
             <span className="text-ink font-bold text-sm">
               ✨ Previewing Vibe
             </span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(previewUrl);
+                alert("Preview URL copied to clipboard!");
+              }}
+              className="px-3 py-1 bg-ink/20 text-ink text-xs font-bold rounded-full"
+            >
+              Share
+            </button>
             <button
               onClick={() => setPreviewUrl(null)}
               className="px-3 py-1 bg-ink text-white text-xs font-bold rounded-full"

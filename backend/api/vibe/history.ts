@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db, schema } from "../_lib/db.js";
 import { verifyAuth } from "../_lib/auth.js";
 import { cors } from "../_lib/cors.js";
@@ -19,9 +19,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { userId } = auth;
 
   try {
+    // Soft delete - keep records
     await db
-      .delete(schema.vibeMessages)
-      .where(eq(schema.vibeMessages.userId, userId));
+      .update(schema.vibeMessages)
+      .set({ deletedAt: new Date().toISOString() })
+      .where(
+        sql`${schema.vibeMessages.userId} = ${userId} AND ${schema.vibeMessages.deletedAt} IS NULL`
+      );
 
     return res.json({ success: true });
   } catch (err) {

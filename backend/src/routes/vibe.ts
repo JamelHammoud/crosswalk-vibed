@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "../db";
 import { vibeBranches, vibeMessages, users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import Anthropic from "@anthropic-ai/sdk";
 import * as github from "../services/github";
@@ -135,7 +135,9 @@ async function getChatHistory(userId: string, limit = 20) {
   return db
     .select()
     .from(vibeMessages)
-    .where(eq(vibeMessages.userId, userId))
+    .where(
+      sql`${vibeMessages.userId} = ${userId} AND ${vibeMessages.deletedAt} IS NULL`
+    )
     .orderBy(vibeMessages.createdAt)
     .limit(limit)
     .all();
@@ -381,6 +383,14 @@ vibe.post("/revert", async (c) => {
     .set({ hasChanges: 0, lastSyncAt: new Date().toISOString() })
     .where(eq(vibeBranches.userId, userId));
 
+  // Soft delete chat history so AI starts fresh but we keep records
+  await db
+    .update(vibeMessages)
+    .set({ deletedAt: new Date().toISOString() })
+    .where(
+      sql`${vibeMessages.userId} = ${userId} AND ${vibeMessages.deletedAt} IS NULL`
+    );
+
   return c.json({ success: true, message: "Branch reset to production" });
 });
 
@@ -427,7 +437,13 @@ vibe.get("/file", async (c) => {
 vibe.delete("/history", async (c) => {
   const userId = c.get("userId");
 
-  await db.delete(vibeMessages).where(eq(vibeMessages.userId, userId));
+  // Soft delete - keep records
+  await db
+    .update(vibeMessages)
+    .set({ deletedAt: new Date().toISOString() })
+    .where(
+      sql`${vibeMessages.userId} = ${userId} AND ${vibeMessages.deletedAt} IS NULL`
+    );
 
   return c.json({ success: true });
 });

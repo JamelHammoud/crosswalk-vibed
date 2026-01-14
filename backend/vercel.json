@@ -2,13 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "https://crswlk.vercel.app"
-        },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
         {
           "key": "Access-Control-Allow-Methods",
           "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
@@ -19,5 +16,14 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/auth/:path*", "destination": "/api/auth/:path*" },
+    { "source": "/drops/:path*", "destination": "/api/drops/:path*" },
+    {
+      "source": "/notifications/:path*",
+      "destination": "/api/notifications/:path*"
+    },
+    { "source": "/", "destination": "/api" }
   ]
 }

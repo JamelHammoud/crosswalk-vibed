@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "../stores/app";
 import { api } from "../services/api";
-import { wsService } from "../services/websocket";
+import { wsService } from "../services/pusher";
 import type { Notification } from "../types";
 
 type FilterType = "all" | "around" | "comments";

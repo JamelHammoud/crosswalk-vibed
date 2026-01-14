@@ -3,6 +3,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db, schema } from "../../_lib/db.js";
 import { verifyAuth } from "../../_lib/auth.js";
 import { cors } from "../../_lib/cors.js";
+import { broadcastHighfive } from "../../_lib/pusher.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (cors(req, res)) return;
@@ -55,6 +56,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         dropId,
         fromUserId: userId,
         createdAt,
+      });
+
+      // Get sender's name for the notification
+      const fromUser = await db.query.users.findFirst({
+        where: eq(schema.users.id, userId),
+      });
+
+      // Broadcast to drop owner
+      broadcastHighfive({
+        dropId,
+        toUserId: drop.userId,
+        fromUserId: userId,
+        fromUserName: fromUser?.name || null,
+        notificationId,
       });
     }
 

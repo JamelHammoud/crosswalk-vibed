@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { db, schema } from "../_lib/db.js";
 import { verifyAuth } from "../_lib/auth.js";
 import { cors } from "../_lib/cors.js";
+import { broadcastDeleteDrop } from "../_lib/pusher.js";
 
 const DELETE_WINDOW_MS = 15 * 60 * 1000;
 const notExpiredFilter = sql`(${schema.drops.expiresAt} IS NULL OR ${schema.drops.expiresAt} > datetime('now'))`;
@@ -69,10 +70,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const createdAt = new Date(drop.createdAt).getTime();
     const now = Date.now();
     if (now - createdAt > DELETE_WINDOW_MS) {
-      return res.status(403).json({ message: "Delete window expired (15 minutes)" });
+      return res
+        .status(403)
+        .json({ message: "Delete window expired (15 minutes)" });
     }
 
     await db.delete(schema.drops).where(eq(schema.drops.id, id));
+
+    // Broadcast deletion to all clients
+    broadcastDeleteDrop(id);
 
     return res.json({ success: true });
   }

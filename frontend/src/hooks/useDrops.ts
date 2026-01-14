@@ -1,13 +1,14 @@
 import { useCallback, useEffect } from "react";
 import { useAppStore } from "../stores/app";
 import { api } from "../services/api";
-import { wsService } from "../services/websocket";
+import { wsService, pusherService } from "../services/pusher";
 import type { DropRangeType, EffectType } from "../types";
 
 export function useDrops() {
   const {
     drops,
     currentLocation,
+    user,
     setDrops,
     addDrop,
     removeDrop,
@@ -16,7 +17,7 @@ export function useDrops() {
   } = useAppStore();
 
   useEffect(() => {
-    wsService.connect();
+    wsService.connect(user?.id);
 
     const unsubscribeNew = wsService.onNewDrop((drop) => {
       addDrop(drop);
@@ -30,7 +31,14 @@ export function useDrops() {
       unsubscribeNew();
       unsubscribeDelete();
     };
-  }, [addDrop, removeDrop]);
+  }, [addDrop, removeDrop, user?.id]);
+
+  // Subscribe to user channel when user changes
+  useEffect(() => {
+    if (user?.id) {
+      pusherService.subscribeToUserChannel(user.id);
+    }
+  }, [user?.id]);
 
   const fetchDrops = useCallback(async () => {
     if (!currentLocation) return;

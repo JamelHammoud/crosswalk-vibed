@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { db, schema } from "../_lib/db.js";
 import { verifyAuth } from "../_lib/auth.js";
 import { cors } from "../_lib/cors.js";
+import { broadcastNewDrop } from "../_lib/pusher.js";
 
 type DropRangeType = "close" | "far" | "anywhere";
 type EffectType = "none" | "confetti" | "rainbow" | "stars" | "spooky" | "gross" | "uhoh";
@@ -147,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       where: eq(schema.users.id, userId),
     });
 
-    return res.json({
+    const newDrop = {
       id,
       userId,
       message: message.trim(),
@@ -159,7 +160,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt,
       userName: user?.name || null,
       highfiveCount: 0,
-    });
+    };
+
+    // Broadcast to all connected clients
+    broadcastNewDrop(newDrop);
+
+    return res.json(newDrop);
   }
 
   return res.status(405).json({ message: "Method not allowed" });

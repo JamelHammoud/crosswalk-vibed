@@ -26,6 +26,7 @@ interface AppState {
   unreadCount: number;
   isProfileOpen: boolean;
   focusDropId: string | null;
+  isDarkMode: boolean;
 
   setUser: (user: User | null) => void;
   setLocation: (location: Location) => void;
@@ -48,11 +49,34 @@ interface AppState {
   setUnreadCount: (count: number) => void;
   setProfileOpen: (open: boolean) => void;
   setFocusDropId: (dropId: string | null) => void;
+  toggleDarkMode: () => void;
+  setDarkMode: (isDark: boolean) => void;
   reset: () => void;
 }
 
+// Helper functions for dark mode persistence
+const getStoredDarkMode = (): boolean => {
+  const stored = localStorage.getItem("crosswalk-dark-mode");
+  return stored === "true";
+};
+
+const setStoredDarkMode = (isDark: boolean): void => {
+  localStorage.setItem("crosswalk-dark-mode", String(isDark));
+};
+
+const applyDarkMode = (isDark: boolean): void => {
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+};
+
+// Initialize theme color and dark mode
 const initialThemeColor = getStoredThemeColor();
+const initialDarkMode = getStoredDarkMode();
 applyThemeColor(initialThemeColor);
+applyDarkMode(initialDarkMode);
 
 export const useAppStore = create<AppState>((set) => ({
   user: null,
@@ -70,6 +94,7 @@ export const useAppStore = create<AppState>((set) => ({
   unreadCount: 0,
   isProfileOpen: false,
   focusDropId: null,
+  isDarkMode: initialDarkMode,
 
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   setLocation: (location) => set({ currentLocation: location }),
@@ -125,6 +150,18 @@ export const useAppStore = create<AppState>((set) => ({
   setUnreadCount: (count) => set({ unreadCount: count }),
   setProfileOpen: (open) => set({ isProfileOpen: open }),
   setFocusDropId: (dropId) => set({ focusDropId: dropId }),
+  toggleDarkMode: () =>
+    set((state) => {
+      const newDarkMode = !state.isDarkMode;
+      setStoredDarkMode(newDarkMode);
+      applyDarkMode(newDarkMode);
+      return { isDarkMode: newDarkMode };
+    }),
+  setDarkMode: (isDark) => {
+    setStoredDarkMode(isDark);
+    applyDarkMode(isDark);
+    set({ isDarkMode: isDark });
+  },
   reset: () =>
     set({
       user: null,
@@ -142,5 +179,6 @@ export const useAppStore = create<AppState>((set) => ({
       unreadCount: 0,
       isProfileOpen: false,
       focusDropId: null,
+      isDarkMode: false,
     }),
 }));

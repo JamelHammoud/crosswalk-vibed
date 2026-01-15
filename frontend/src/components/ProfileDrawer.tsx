@@ -29,7 +29,7 @@ export function ProfileDrawer({
   onClose,
   onSignOut,
 }: ProfileDrawerProps) {
-  const { user, setUser, themeColor, setThemeColor } = useAppStore();
+  const { user, setUser, themeColor, setThemeColor, isDarkMode, toggleDarkMode } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(user?.name || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -80,14 +80,14 @@ export function ProfileDrawer({
         onClick={onClose}
       />
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 animate-slide-up">
-        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3" />
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl z-50 animate-slide-up">
+        <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-3" />
         <div className="p-6 safe-area-bottom">
-          <h2 className="text-xl font-bold text-ink mb-6">Profile</h2>
+          <h2 className="text-xl font-bold text-ink dark:text-white mb-6">Profile</h2>
 
           <div className="space-y-5">
             <div>
-              <label className="text-gray-500 text-sm mb-2 block">
+              <label className="text-gray-500 dark:text-gray-400 text-sm mb-2 block">
                 Theme Color
               </label>
               <div className="flex gap-3">
@@ -97,7 +97,7 @@ export function ProfileDrawer({
                     onClick={() => setThemeColor(color.id)}
                     className={`w-12 h-12 rounded-full transition-all ${
                       themeColor === color.id
-                        ? "ring-2 ring-offset-2 ring-gray-400 scale-110"
+                        ? "ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500 dark:ring-offset-gray-900 scale-110"
                         : "hover:scale-105"
                     }`}
                     style={{ backgroundColor: color.id }}
@@ -108,7 +108,30 @@ export function ProfileDrawer({
             </div>
 
             <div>
-              <label className="text-gray-500 text-sm mb-2 block">
+              <label className="text-gray-500 dark:text-gray-400 text-sm mb-2 block">
+                Dark Mode
+              </label>
+              <button
+                onClick={toggleDarkMode}
+                className="w-full h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-between px-4 transition-colors"
+              >
+                <span className="text-ink dark:text-white font-medium">
+                  {isDarkMode ? "Dark Mode" : "Light Mode"}
+                </span>
+                <div className="relative">
+                  <div className={`w-14 h-8 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors`}>
+                    <div
+                      className={`absolute top-1 w-6 h-6 bg-white dark:bg-gray-900 rounded-full shadow-md transition-transform ${
+                        isDarkMode ? "translate-x-7" : "translate-x-1"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div>
+              <label className="text-gray-500 dark:text-gray-400 text-sm mb-2 block">
                 Username
               </label>
               {isEditing ? (
@@ -117,21 +140,21 @@ export function ProfileDrawer({
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="flex-1 h-12 bg-gray-100 border border-gray-200 rounded-xl px-4 text-ink focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="flex-1 h-12 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 text-ink dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                     placeholder="Enter username"
                     maxLength={20}
                   />
                   <button
                     onClick={handleSave}
                     disabled={isLoading || !username.trim()}
-                    className="h-12 px-4 bg-primary text-ink font-medium rounded-xl disabled:opacity-50"
+                    className="h-12 px-4 bg-primary text-ink dark:text-white font-medium rounded-xl disabled:opacity-50"
                   >
                     {isLoading ? "..." : "Save"}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <span className="text-ink text-lg">
+                  <span className="text-ink dark:text-white text-lg">
                     {user?.name || "No username set"}
                   </span>
                   <button
@@ -139,7 +162,7 @@ export function ProfileDrawer({
                       setUsername(user?.name || "");
                       setIsEditing(true);
                     }}
-                    className="text-gray-600 text-sm font-medium"
+                    className="text-gray-600 dark:text-gray-400 text-sm font-medium"
                   >
                     Edit
                   </button>
@@ -147,12 +170,12 @@ export function ProfileDrawer({
               )}
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
 
             <button
               onClick={handleGenerate}
               disabled={isLoading}
-              className="w-full h-12 bg-gray-100 text-ink font-medium rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-12 bg-gray-100 dark:bg-gray-800 text-ink dark:text-white font-medium rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <svg
                 className="w-5 h-5"
@@ -166,9 +189,9 @@ export function ProfileDrawer({
               {isLoading ? "Generating..." : "Generate Random Username"}
             </button>
 
-            <div className="pt-4 border-t border-gray-200">
-              <p className="text-gray-500 text-sm mb-1">Email</p>
-              <p className="text-ink">{user?.email || "Private"}</p>
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Email</p>
+              <p className="text-ink dark:text-white">{user?.email || "Private"}</p>
             </div>
 
             {showVibeFeature && (
@@ -227,7 +250,7 @@ export function ProfileDrawer({
 
             <button
               onClick={handleSignOut}
-              className="w-full h-12 bg-red-50 text-red-600 font-medium rounded-xl mt-4"
+              className="w-full h-12 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium rounded-xl mt-4"
             >
               Sign Out
             </button>
